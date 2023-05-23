@@ -16,6 +16,13 @@ class NucleicAcidGraph(Graph):
         super().__init__()
         
         
+    def complnb(self, n: int) -> Optional[int]:
+        for m, bond_type in self._bonds[n].items():
+            if bond_type:
+                return m
+        return None
+    
+
     @cached_property
     def pairs(self) -> List[Tuple[int, int]]:
         pairs = []
@@ -33,15 +40,8 @@ class NucleicAcidGraph(Graph):
         return pairs
     
     
-    def complnb(self, n: int) -> Optional[int]:
-        for m, bond_type in self._bonds[n].items():
-            if bond_type:
-                return m
-        return None
-    
-    
     @cached_property
-    def helixes(self) -> List[Tuple]:
+    def helixes(self) -> List[tuple]:
         helixes = []
         op = []
         close = []
@@ -66,33 +66,71 @@ class NucleicAcidGraph(Graph):
         return helixes
         
         
-    def assemble_dot_structure(self) -> str:
-        helixes = self.helixes
-        intersection = [0 for _ in range(len(helixes))]
-        dots = ['.' for _ in range(len(self))]
+    def _helix_intersect(self, current_helix, prev_helix) -> bool:
+        # .(((..[[..)))..]].
+        return current_helix[0][-1]<prev_helix[1][0] and current_helix[1][0]>prev_helix[1][-1]
 
-        intersect = lambda h, prev_h: h[0][-1]<prev_h[1][0] and h[1][0]>prev_h[1][-1] # .(((..[[..)))..]].
+
+    @cached_property
+    def helix_orders(self) -> Tuple[int]:
+        helixes = self.helixes
+        orders = [0 for _ in range(len(helixes))]
 
         for i, h in enumerate(helixes):
-            helixes_orders = []
+            intersection_orders = []
             for prev_h in range(i):
-                if intersect(h, helixes[prev_h]):
-                    helixes_orders.append(intersection[prev_h])
+                if self._helix_intersect(h, helixes[prev_h]):
+                    intersection_orders.append(orders[prev_h])
 
-            helixes_orders = set(helixes_orders)
-            if len(helixes_orders)>=10:
+            intersection_orders = set(intersection_orders)
+            if len(intersection_orders)>=10:
                 break
-            lowest_helix_order = min(set(range(10)) - helixes_orders)# lowest type of brackets
-            intersection[i] = lowest_helix_order
+            lowest_helix_order = min(set(range(10)) - intersection_orders) # lowest type of brackets
+            orders[i] = lowest_helix_order
 
-            brackets = HELIX_ORDER[lowest_helix_order]
+        return tuple(orders)
+
+
+    def assemble_dot_structure(self) -> str:
+        helixes = self.helixes
+        orders = self.helix_orders
+        dots = ['.' for _ in range(len(self))]
+
+        for i, h in enumerate(helixes):
+            brackets = HELIX_ORDER[orders[i]]
             for c in range(len(h[0])):
                 dots[h[0][c]] = brackets[0] # open bracket
                 dots[h[1][-(1+c)]] = brackets[1] # close bracket
 
         return ''.join(dots)
     
+
+    @property
+    def knots(self) -> Tuple[int]:
+        return tuple([i for i in range(len(self.helixes)) if self.helix_orders[i]])
     
+
+    @property
+    def knot_helixes(self) -> List[tuple]:
+        return [h for i, h in enumerate(self.helixes) if i in self.knots]
+
+    
+    @property
+    def knot_pairs(self) -> List[tuple]:
+        pairs = []
+        for h in self.knot_helixes:
+            for i in range(len(h[0])):
+                pairs.append((h[0][i], h[1][-(1+i)]))
+
+        return pairs
+    
+
+    def is_knot(self) -> bool:
+        if self.helix_orders:
+            return max(self.helix_orders)>0
+        return False
+
+
     def get_adjacency(self) -> numpy.array:
         slen = len(self)
         adj = np.zeros((slen, slen), dtype=np.int32)

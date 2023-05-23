@@ -58,6 +58,36 @@ class TestStructure:
         with pytest.raises(InvalidStructure):
             _ = NA(data, filter_linear_structures=True, ignore_unclosed_bonds=True)
             
+
+
+class TestGraphParse:
+
+    @pytest.mark.parametrize(
+        "struct, is_knot",
+        [
+            ("..((..[[.))..]]..", True), 
+            ("...((..))..[[[..]]]", False),
+            ("((..(((..)))...((...))..))", False), 
+            ("....", False)
+         ]
+    )
+    def test_is_knot(self, struct, is_knot):
+        assert NA(struct).is_knot()==is_knot
+
+
+    @pytest.mark.parametrize(
+        "struct, orders",
+        [
+            ("..((..[[.))..]]..", (0, 1)), 
+            ("...((..))..[[[..]]]", (0, 0)),
+            ("..(((.[[.)))..{{{.((..]].))..}}}.", (0, 1, 0, 0)),
+            (".((.[[.)).]]..([{<)]}>....", (0, 1, 0, 1, 2, 3)) 
+         ]
+    )
+    def test_helix_orders(self, struct, orders):
+        na = NA(struct)
+        for i, order in enumerate(na.helix_orders):
+            assert order == orders[i]
     
 
         
