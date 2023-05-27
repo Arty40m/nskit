@@ -91,7 +91,7 @@ class pdbRead:
 
             for res in chain:
                 if res.res_name in AMIN_NAMES:
-                    typ = 'amin'
+                    typ = 'amins'
                     break
                 
                 elif res.res_name.strip(" D35") in NA_NAMES:
@@ -120,16 +120,16 @@ class pdbRead:
             # Add chain
             if (line.startswith("TER") or \
                 line.startswith("MODEL") or \
-                line.startswith("ENDMDL")) and \
-                len(chain_ress)>0:
+                line.startswith("ENDMDL")):
 
                 if len(res_tokens)>0: 
                     chain_ress.append(Residue(res_tokens))
                     res_tokens = []
                     
-                chains.append(chain_ress)
-                chain_ress = []
-                current_resn = 0
+                if len(chain_ress)>0:
+                    chains.append(chain_ress)
+                    chain_ress = []
+                    current_resn = 0
 
             elif line.startswith('ATOM') or (line.startswith('HETATM')):
                 tokens = self.tokenize(line)
