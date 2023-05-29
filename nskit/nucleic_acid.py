@@ -5,11 +5,12 @@ import numpy
 import numpy as np
 
 from .nucleic_acid_graph import NucleicAcidGraph
+from .draw import DrawNA
 from .exceptions import InvalidSequence, InvalidAdjacency
 
 
 
-class NucleicAcid(NucleicAcidGraph):
+class NucleicAcid(NucleicAcidGraph, DrawNA):
     __slots__ = ('__name', '__meta')
     
     def __init__(self):
