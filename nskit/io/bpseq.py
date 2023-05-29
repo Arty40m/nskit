@@ -130,6 +130,8 @@ class bpseqDirRead:
         self.raise_na_errors = raise_na_errors
         self.filter_linear_structures = filter_linear_structures
         self.file_as_name = file_as_name
+
+        self._iterator = self._iterate()
         
         
     def __enter__(self):
@@ -146,9 +148,9 @@ class bpseqDirRead:
             if file.endswith(".bpseq"):
                 count += 1
         return count
-        
     
-    def __iter__(self) ->  Iterator[Optional[NucleicAcid]]:
+
+    def _iterate(self):
         for file in os.listdir(self._dir):
             if not file.endswith(".bpseq"):
                 continue
@@ -160,6 +162,14 @@ class bpseqDirRead:
                            file_as_name=self.file_as_name
                           ) as f:
                 yield f.read()
+        
+    
+    def __iter__(self) ->  Iterator[Optional[NucleicAcid]]:
+        return self._iterator
+    
+
+    def __next__(self) -> Optional[NucleicAcid]:
+        return next(self._iterator)
                 
                 
 class bpseqWrite:

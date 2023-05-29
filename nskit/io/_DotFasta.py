@@ -18,6 +18,8 @@ class DotFastaRead(ABC):
         else:
             raise TypeError(f"Invalid file type. Accepted - string, Path, TextIOWrapper")
         
+        self._iterator = self._iterate()
+        
         
     def __enter__(self):
         return self
@@ -43,7 +45,7 @@ class DotFastaRead(ABC):
         return count
         
         
-    def __iter__(self) -> Iterator[Optional[NucleicAcid]]:
+    def _iterate(self):
         line = self._file.readline().strip()
         if not line.startswith(">"):
             raise InvalidFasta(f"First line name without '>'")
@@ -69,10 +71,14 @@ class DotFastaRead(ABC):
             lines.append(line)
             
         yield self._make_na(lines, last_name_idx)
+
+        
+    def __iter__(self) -> Iterator[Optional[NucleicAcid]]:
+        return self._iterator
                     
                     
     def __next__(self) -> Optional[NucleicAcid]:
-        return next(iter(self))
+        return next(self._iterator)
     
     
     @abstractmethod
