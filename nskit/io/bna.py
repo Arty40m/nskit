@@ -1,6 +1,6 @@
-from typing import Union
+from typing import Union, Iterator
 from pathlib import Path
-from io import BufferedWriter
+from io import BufferedWriter, BufferedRandom
 import math
 
 from ..nucleic_acid import NucleicAcid
@@ -45,15 +45,15 @@ Maximum memory consumption is [1.25*N + 5] bytes for N nbs.
 """
 
 
-class bnaWrite():
+class bnaWrite:
     
-    def __init__(self, file: Union[str, Path, BufferedWriter], *, 
+    def __init__(self, file: Union[str, Path, BufferedWriter, BufferedRandom], *, 
                  append: bool = False,
                 ):
         
         if isinstance(file, (str, Path)):
             self._file = open(file, 'ab' if append else 'wb')
-        elif isinstance(file, BufferedWriter):
+        elif isinstance(file, (BufferedWriter, BufferedRandom)):
             self._file = file
         else:
             raise TypeError(f"Invalid file type. Accepted - string, Path, BufferedWriter")
@@ -142,7 +142,7 @@ class bnaWrite():
         
         name = na.name
         if write_meta and na.meta:
-            str_meta = str(na.meta).replace(' ', '').replace("'", '')
+            str_meta = str(na.meta).replace(' ', '').replace("'", '').strip("{}")
             name = f"{name}{META_SEPARATOR}{str_meta}"
 
         if len(name)>4095:
@@ -157,4 +157,166 @@ class bnaWrite():
         self._file.write(na_bytes)
 
 
+class bnaRead:
+
+    def __init__(self, file: Union[str, Path, BufferedWriter, BufferedRandom]):
+        if isinstance(file, (str, Path)):
+            self._file = open(file, 'rb')
+        elif isinstance(file, (BufferedWriter, BufferedRandom)):
+            self._file = file
+        else:
+            raise TypeError(f"Invalid file type. Accepted - string, Path, TextIOWrapper")
+        
+        self._iterator = self._iterate()
+        
+        
+    def __enter__(self):
+        return self
+
+    
+    def close(self):
+        self._file.close()
+
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+        
+        
+    def __len__(self):
+        tell = self._file.tell()
+        self._file.seek(0)
+        count = 0
+
+        size_block = int.from_bytes(self._file.read(2), 'big', signed=False)
+        if size_block==0: return 0
+        na_bytes = self._file.read(size_block-2)
+
+        while na_bytes:
+            count += 1
+            size_block = int.from_bytes(self._file.read(2), 'big', signed=False)
+            if size_block==0: break
+            na_bytes = self._file.read(size_block-2)
+                
+        self._file.seek(tell)
+        return count
+        
+        
+    def _iterate(self):
+        size_block = int.from_bytes(self._file.read(2), 'big', signed=False)
+        if size_block==0: return
+        na_bytes = self._file.read(size_block-2)
+
+        while True:
+            yield self._make_na(na_bytes)
+
+            size_block = int.from_bytes(self._file.read(2), 'big', signed=False)
+            if size_block==0: break
+            na_bytes = self._file.read(size_block-2)
+
+        
+    def __iter__(self) -> Iterator[NucleicAcid]:
+        return self._iterator
+                    
+                    
+    def __next__(self) -> NucleicAcid:
+        return next(self._iterator)
+    
+    
+    def read_3_bytes(self, barray, idx):
+        i1 = (barray[idx]<<4) + (barray[idx+1]>>4)
+        i2 = barray[idx+1]&15
+        i2 = (i2<<8) + barray[idx+2]
+        return i1, i2
+
+    
+    def read_1_byte(self, barray, idx):
+        return (barray[idx]>>4), (barray[idx]&15)
+    
+
+    def parse_name(self, name_str):
+        if META_SEPARATOR not in name_str:
+            return name_str, None
+        
+        name, meta_str = name_str.split(META_SEPARATOR)
+        meta = {}
+        for kv in meta_str.split(','):
+            k, v = kv.split(':')
+            meta[k] = v
+
+        return name, meta
+    
+
+    def _make_na(self, na_bytes: bytes) -> NucleicAcid:
+        pointer = 0
+        namelen, slen = self.read_3_bytes(na_bytes, pointer)
+        pointer += 3
+
+        # name
+        if namelen:
+            name_str = []
+            for _ in range(namelen):
+                name_str.append(chr(na_bytes[pointer]))
+                pointer += 1
+            name_str = ''.join(name_str)
+            name, meta = self.parse_name(name_str)
+        else:
+            name, meta = None, None
+
+        # seq
+        seq = []
+        paired_nbs = []
+        for i in range(0, 2*(slen//2), 2):
+            i1, i2 = self.read_1_byte(na_bytes, pointer)
+            
+            seq.append(INV_NB_DICT[(i1&7)])
+            seq.append(INV_NB_DICT[(i2&7)])
+
+            if (i1&8): paired_nbs.append(i)
+            if (i2&8): paired_nbs.append(i+1)
+
+            pointer += 1
+
+        if slen%2!=0:
+            i1 = na_bytes[pointer]>>4
+            seq.append(INV_NB_DICT[(i1&7)])
+            pointer += 1
+
+        seq = ''.join(seq)
+
+        # pairs
+        compl_nbs = []
+        plen = len(paired_nbs)
+        for i in range(0, 2*(plen//2), 2):
+            i1, i2 = self.read_3_bytes(na_bytes, pointer)
+
+            compl_nbs.append(i1)
+            compl_nbs.append(i2)
+            pointer+=3
+
+        if plen%2!=0:
+            i1 = (na_bytes[pointer+1]>>4) + (na_bytes[pointer]<<4)
+            compl_nbs.append(i1)
+
+        pairs = tuple(zip(paired_nbs, compl_nbs))
+
+        # na
+        na = NucleicAcid()
+        if name: na.name = name
+        if meta: na.meta.update(meta)
+        
+        for i, nb in enumerate(seq):
+            _ = na.add_node(nb)
+            if i>0:
+                na.add_bond(i-1, i, 0)
+                
+        if len(pairs):
+            for o, e in pairs:
+                na.add_bond(o, e, 1)
+        else:
+            na.__dict__['struct'] = None
+
+        return na
+    
+
 bnaWrite.__doc__ = format_doc
+bnaRead.__doc__ = format_doc

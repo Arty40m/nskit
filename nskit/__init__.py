@@ -8,6 +8,6 @@ __all__ = ["NA", "NucleicAcid",
            "FastaRead", "FastaWrite",
            "bpseqRead", "bpseqDirRead", "bpseqWrite",
            "pdbRead", "pdbParse", 
-           "bnaWrite", 
+           "bnaWrite", "bnaRead", 
            "edit_draw_config"
           ]
