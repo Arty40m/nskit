@@ -17,6 +17,7 @@ class bpseqRead:
                  raise_na_errors: bool = False, 
                  file_as_name: bool = False, 
                  filter_linear_structures: bool = False, 
+                 fix_sharp_helixes: bool = False
                 ):
         
         if isinstance(file, (str, Path)):
@@ -28,6 +29,7 @@ class bpseqRead:
         
         self.raise_na_errors = raise_na_errors
         self.filter_linear_structures = filter_linear_structures
+        self.fix_sharp_helixes = fix_sharp_helixes
         self.name = os.path.basename(file).split('.')[0] if file_as_name else None
             
         
@@ -77,6 +79,7 @@ class bpseqRead:
                 meta[k] = v
                 
         # validate
+        sharp_nb_indexes = set()
         for o, e in pairs.items():
             # o : e
             # e : o
@@ -94,6 +97,20 @@ class bpseqRead:
             if expected_o!=o:
                 if self.raise_na_errors:
                     raise InvalidStructure(f"Nucleic base {e} has two bonds")
+                return None
+            
+            if abs(o-e)==1:
+                sharp_nb_indexes.add(o)
+
+        if len(sharp_nb_indexes): 
+            if self.fix_sharp_helixes:
+                for sharp_idx in sharp_nb_indexes:
+                    del pairs[sharp_idx]
+
+            elif self.raise_na_errors:
+                raise InvalidStructure(f"Sharp helix in structure")
+            
+            else:
                 return None
                 
         if not len(pairs) and self.filter_linear_structures:

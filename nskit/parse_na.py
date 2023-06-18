@@ -52,7 +52,8 @@ def parse_arguments(a:Optional[str], b:Optional[str]) -> Tuple[Optional[str], Op
 
 def parse_structure(struct: str, 
                     ignore_unclosed_bonds: bool, 
-                    filter_linear_structures: bool
+                    filter_linear_structures: bool, 
+                    fix_sharp_helixes: bool
                    ) -> List:
     pairs = []
     if len(rem:=(set(struct) - DOT_STRUCTURE_SYMBOLS))!=0:
@@ -81,6 +82,17 @@ def parse_structure(struct: str,
     if not stack.isempty() and not ignore_unclosed_bonds:
         raise InvalidStructure(f"Structure contains unclosed bonds, use ignore_unclosed_bonds=True to omit such bonds")
 
+    sharp_pairs_indexes = set()
+    for i, (o, e) in enumerate(pairs):
+        if abs(o-e)==1:
+            sharp_pairs_indexes.add(i)
+    
+    if len(sharp_pairs_indexes): 
+        if fix_sharp_helixes:
+            pairs = [p for i, p in enumerate(pairs) if i not in sharp_pairs_indexes]
+        else:
+            raise InvalidStructure(f"Sharp helix in structure")
+    
     if filter_linear_structures and len(pairs)==0:
         raise InvalidStructure(f"Dot structure does not contain any valid bond")
         
@@ -91,6 +103,7 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
        name: Optional[str] = None, 
        meta: Optional[dict] = None,
        filter_linear_structures: bool = False, 
+       fix_sharp_helixes: bool = False, 
        ignore_unclosed_bonds: bool = False, 
        upper_sequence: bool = True,
       ) -> NucleicAcid:
@@ -102,6 +115,7 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
     :param name: na name.
     :param meta: dictionary of meta information convertable to string.
     :param filter_linear_structures: raise error on structure with no complementary bonds. Default - False.  
+    :param fix_sharp_helixes: remove bond between neighboring nbs to fix sharp helixes. Default - False.
     :param ignore_unclosed_bonds: omit single unpaired parentheses without raising error. Default - False.
     :param upper_sequence: upper sequence characters. Default - True.
 
@@ -128,7 +142,7 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
         
     # parse structure
     if struct:
-        pairs = parse_structure(struct, ignore_unclosed_bonds, filter_linear_structures)
+        pairs = parse_structure(struct, ignore_unclosed_bonds, filter_linear_structures, fix_sharp_helixes)
     
     # create graph
     na = NucleicAcid()

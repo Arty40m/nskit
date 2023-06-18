@@ -6,7 +6,7 @@ import numpy as np
 
 from .nucleic_acid_graph import NucleicAcidGraph
 from .draw import DrawNA
-from .exceptions import InvalidSequence, InvalidAdjacency
+from .exceptions import InvalidSequence, InvalidAdjacency, InvalidStructure
 
 
 
@@ -84,6 +84,7 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
                        name: Optional[str] = None,
                        meta: Optional[dict] = None,
                        upper_sequence: bool = True, 
+                       fix_sharp_helixes: bool = False, 
                        trust_adj: bool = False
                       ) -> 'NucleicAcid':
         """
@@ -94,6 +95,7 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
         :param name: na name.
         :param meta: dictionary of meta information convertable to string.
         :param upper_sequence: upper sequence characters. Default - True.
+        :param fix_sharp_helixes: remove bond between neighboring nbs to fix sharp helixes. Default - False.
         :param trust_adj: whether to skip adjacency validation. Validation has O(N^2) time complexity. Default - False.
 
         :return: NucleicAcid object.
@@ -139,6 +141,11 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
         for o, e in enumerate(vec):
             if e==0: 
                 continue
+
+            if abs(o-e)==1:
+                if fix_sharp_helixes:
+                    continue
+                raise InvalidStructure(f"Sharp helix in structure")
                 
             na.add_bond(o, e, 1)
             

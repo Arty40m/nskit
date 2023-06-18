@@ -51,13 +51,34 @@ class TestStructure:
         
         
     @pytest.mark.parametrize(
-        "data",
+        "struct",
         ['....', '..((..]].', '..).']
     )
-    def test_empty_structure(self, data):
+    def test_empty_structure(self, struct):
         with pytest.raises(InvalidStructure):
-            _ = NA(data, filter_linear_structures=True, ignore_unclosed_bonds=True)
-            
+            _ = NA(struct, filter_linear_structures=True, ignore_unclosed_bonds=True)
+
+
+    @pytest.mark.parametrize(
+        "struct",
+        ['((()))', '..((..)).()', '..{{}}.']
+    )
+    def test_sharp_helix_error(self, struct):
+        with pytest.raises(InvalidStructure):
+            _ = NA(struct)
+
+
+    @pytest.mark.parametrize(
+        "struct, fixed",
+        [
+            ('((()))', '((..))'), 
+            ('..().().', '........'), 
+            ('.(.).[[]].', '.(.).(..).'), 
+        ]
+    )
+    def test_sharp_helix_fix(self, struct, fixed):
+        na = NA(struct, fix_sharp_helixes=True)
+        assert na.struct==fixed
 
 
 class TestGraphParse:

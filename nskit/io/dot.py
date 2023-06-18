@@ -16,6 +16,7 @@ class DotRead(DotFastaRead):
     def __init__(self, file: Union[str, Path], *, 
                  raise_na_errors: bool = False,
                  filter_linear_structures: bool = False, 
+                 fix_sharp_helixes: bool = False, 
                  ignore_unclosed_bonds: bool = False, 
                  upper_sequence: bool = True,
                 ):
@@ -24,6 +25,7 @@ class DotRead(DotFastaRead):
         
         self.raise_na_errors = raise_na_errors
         self.filter_linear_structures = filter_linear_structures
+        self.fix_sharp_helixes = fix_sharp_helixes
         self.ignore_unclosed_bonds = ignore_unclosed_bonds
         self.upper_sequence = upper_sequence
     
@@ -67,6 +69,7 @@ class DotRead(DotFastaRead):
                     name=name, 
                     meta=meta,
                     filter_linear_structures = self.filter_linear_structures, 
+                    fix_sharp_helixes = self.fix_sharp_helixes, 
                     ignore_unclosed_bonds = self.ignore_unclosed_bonds, 
                     upper_sequence = self.upper_sequence,
                    )

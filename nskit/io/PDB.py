@@ -76,14 +76,6 @@ class pdbParse:
         self.min_energy_threshold = min_energy_threshold
 
 
-    def __enter__(self):
-        return self
-
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        ...
-
-
     def parse(self, file: Union[str, Path, TextIOWrapper], *, 
              ignore_nonstandard_residues: bool = False, 
              with_energy_matrix: bool = False, 
