@@ -49,6 +49,13 @@ unconsistent_bpseq = \
 6 G 0
 """
 
+sharp_helix_bpseq = \
+"""1 G 4
+2 G 3
+3 G 2
+4 G 1
+"""
+
 class TestBpseq:
 
     @pytest.mark.parametrize(
@@ -124,6 +131,7 @@ class TestBpseq:
             with pytest.raises(InvalidStructure):
                 _ = f.read()
 
+                
     def test_unconsistent(self):
         fp = tempfile.TemporaryFile('w+')
         fp.write(unconsistent_bpseq)
@@ -132,4 +140,40 @@ class TestBpseq:
         with bpseqRead(fp, raise_na_errors=True) as f:
             with pytest.raises(InvalidStructure):
                 _ = f.read()
+                
+                
+    def test_sharp_helix(self):
+        fp = tempfile.TemporaryFile('w+')
+        fp.write(sharp_helix_bpseq)
+        fp.seek(0)
 
+        with bpseqRead(fp, raise_na_errors=True) as f:
+            with pytest.raises(InvalidStructure):
+                _ = f.read()
+
+                
+    def test_sharp_helix_fix(self):
+        fp = tempfile.TemporaryFile('w+')
+        fp.write(sharp_helix_bpseq)
+        fp.seek(0)
+
+        with bpseqRead(fp, fix_sharp_helixes=True) as f:
+            na = f.read()
+            assert na.struct=='(..)'
+            
+            
+    def test_sharp_helix_omit(self):
+        fp = tempfile.TemporaryFile('w+')
+        fp.write(sharp_helix_bpseq)
+        fp.seek(0)
+
+        with bpseqRead(fp, raise_na_errors=False) as f:
+            na = f.read()
+            assert na is None
+
+
+    
+    
+    
+    
+    

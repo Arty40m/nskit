@@ -145,7 +145,7 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
             if abs(o-e)==1:
                 if fix_sharp_helixes:
                     continue
-                raise InvalidStructure(f"Sharp helix in structure")
+                raise InvalidStructure(f"Sharp helix between nbs {o} and {e}, use fix_sharp_helixes=True to omit such bonds")
                 
             na.add_bond(o, e, 1)
             

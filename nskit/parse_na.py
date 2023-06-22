@@ -70,29 +70,21 @@ def parse_structure(struct: str,
         elif s in ')]}>abcdef':
             op_idx = stack[s]
 
-            if op_idx is not None:
-                pairs.append((op_idx, i))
-
-            elif ignore_unclosed_bonds:
-                continue
-
-            else:
+            if op_idx is None:
+                if ignore_unclosed_bonds:
+                    continue
                 raise InvalidStructure(f"Closing bond {s} at index {i} has no open pair, use ignore_unclosed_bonds=True to omit such bonds")
+                
+            if abs(op_idx-i)==1:
+                if fix_sharp_helixes:
+                    continue
+                raise InvalidStructure(f"Sharp helix between nbs {op_idx} and {i}, use fix_sharp_helixes=True to omit such bonds")
+                    
+            pairs.append((op_idx, i))
 
     if not stack.isempty() and not ignore_unclosed_bonds:
         raise InvalidStructure(f"Structure contains unclosed bonds, use ignore_unclosed_bonds=True to omit such bonds")
 
-    sharp_pairs_indexes = set()
-    for i, (o, e) in enumerate(pairs):
-        if abs(o-e)==1:
-            sharp_pairs_indexes.add(i)
-    
-    if len(sharp_pairs_indexes): 
-        if fix_sharp_helixes:
-            pairs = [p for i, p in enumerate(pairs) if i not in sharp_pairs_indexes]
-        else:
-            raise InvalidStructure(f"Sharp helix in structure")
-    
     if filter_linear_structures and len(pairs)==0:
         raise InvalidStructure(f"Dot structure does not contain any valid bond")
         

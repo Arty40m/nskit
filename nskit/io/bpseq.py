@@ -59,18 +59,27 @@ class bpseqRead:
             if line[0].isnumeric(): # pair
                 idx, nb, compl = line.split()
                 idx, compl = int(idx), int(compl)
-
+                seq.append(nb)
+                
                 if (idx-prev_idx)!=1:
-                    print(compl, prev_idx)
                     raise InvalidStructure(f"Nucleic base indexes must be sequential")
 
                 if idx==compl:
                     raise InvalidStructure(f"Nucleic base {idx-1} is self bounded")
-                    
-                seq.append(nb)
-                if compl: pairs[idx-1] = compl-1
-
+                
                 prev_idx = idx
+                if not compl:
+                    continue
+                    
+                if abs(idx-compl)==1:
+                    if self.fix_sharp_helixes:
+                        continue
+                        
+                    if self.raise_na_errors:
+                        raise InvalidStructure(f"Sharp helix between nbs {idx-1} and {compl-1}, use fix_sharp_helixes=True to omit such bonds")
+                    return None
+                        
+                pairs[idx-1] = compl-1
                     
             else: # meta inf
                 toks = line.split(META_SEPARATOR)
@@ -79,7 +88,6 @@ class bpseqRead:
                 meta[k] = v
                 
         # validate
-        sharp_nb_indexes = set()
         for o, e in pairs.items():
             # o : e
             # e : o
@@ -97,20 +105,6 @@ class bpseqRead:
             if expected_o!=o:
                 if self.raise_na_errors:
                     raise InvalidStructure(f"Nucleic base {e} has two bonds")
-                return None
-            
-            if abs(o-e)==1:
-                sharp_nb_indexes.add(o)
-
-        if len(sharp_nb_indexes): 
-            if self.fix_sharp_helixes:
-                for sharp_idx in sharp_nb_indexes:
-                    del pairs[sharp_idx]
-
-            elif self.raise_na_errors:
-                raise InvalidStructure(f"Sharp helix in structure")
-            
-            else:
                 return None
                 
         if not len(pairs) and self.filter_linear_structures:
