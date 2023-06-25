@@ -68,14 +68,29 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
     
     
     def __eq__(self, other):
-        if isinstance(other, str):
-            return self.seq == other.strip().upper()
+        """
+        Two NucleicAcids are equal if nb sequences and all complementary bonds are equal.
+        """
+        if not isinstance(other, NucleicAcid):
+            raise TypeError(f"NucleicAcid can be compared only with another NucleicAcid, got {type(other)}")
         
-        elif isinstance(other, NucleicAcid):
-            return self.seq == other.seq
+        if len(self)!=len(other):
+            return False
         
-        else:
-            raise TypeError(f"Can not compare NucleicAcid and {type(other)}")
+        if self.seq!=other.seq:
+            return False
+        
+        if len(self.pairs)!=len(other.pairs):
+            return False
+        
+        return all([p1==p2 for p1, p2 in zip(self.pairs, other.pairs)])
+    
+
+    def __hash__(self) -> int:
+        """
+        NucleicAcid's hash is computed only by sequence and complementary bonds.
+        """
+        return hash((self.seq, self.pairs))
     
     
     @classmethod

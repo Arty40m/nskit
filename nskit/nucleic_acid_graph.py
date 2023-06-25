@@ -71,7 +71,7 @@ class NucleicAcidGraph(Graph):
     
 
     @cached_property
-    def pairs(self) -> List[Tuple[int, int]]:
+    def pairs(self) -> Tuple[Tuple[int, int]]:
         pairs = []
         visited = set()
         
@@ -84,11 +84,11 @@ class NucleicAcidGraph(Graph):
                     pairs.append((n, m))
                     visited.add(m)
                     
-        return pairs
+        return tuple(pairs)
     
     
     @cached_property
-    def helixes(self) -> List[tuple]:
+    def helixes(self) -> Tuple[Tuple[int]]:
         helixes = []
         op = []
         close = []
@@ -110,7 +110,7 @@ class NucleicAcidGraph(Graph):
         if len(op)!=0:
             helixes.append((tuple(op), tuple(close[::-1])))
         
-        return helixes
+        return tuple(helixes)
         
         
     def _helix_intersect(self, current_helix, prev_helix) -> bool:
@@ -158,18 +158,18 @@ class NucleicAcidGraph(Graph):
     
 
     @property
-    def knot_helixes(self) -> List[tuple]:
-        return [h for i, h in enumerate(self.helixes) if i in self.knots]
+    def knot_helixes(self) -> Tuple[Tuple[int]]:
+        return tuple([h for i, h in enumerate(self.helixes) if i in self.knots])
 
     
     @property
-    def knot_pairs(self) -> List[tuple]:
+    def knot_pairs(self) -> Tuple[tuple]:
         pairs = []
         for h in self.knot_helixes:
             for i in range(len(h[0])):
                 pairs.append((h[0][i], h[1][-(1+i)]))
 
-        return pairs
+        return tuple(pairs)
     
 
     def is_knot(self) -> bool:
