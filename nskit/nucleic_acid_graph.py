@@ -11,6 +11,8 @@ HELIX_ORDER = {0:'()', 1:'[]', 2:'{}', 3:'<>', 4:'Aa', 5:'Bb', 6:'Cc', 7:'Dd', 8
 
 
 class NucleicAcidGraph(Graph):
+
+    GRAPH_CACHE_KEYS = ('struct', 'pairs', 'helixes', 'helix_orders', 'knots', 'knot_helixes', 'knot_pairs')
     
     def __init__(self):
         super().__init__()
@@ -21,6 +23,51 @@ class NucleicAcidGraph(Graph):
             if bond_type:
                 return m
         return None
+    
+
+    def join(self, n: int, m: int):
+        """
+        Creates complementary bond between specified nbs.
+        """
+        if n<0: n = len(self) + n
+        if m<0: m = len(self) + m
+
+        if (not 0<=n<len(self)) or (not 0<=m<len(self)):
+            raise IndexError(f"Nb index is out of range")
+
+        if abs(n-m)<2: 
+            raise ValueError("At least 1 nb must be between joining nbs")
+
+        if self.complnb(n):
+            raise ValueError(f"Nb {n} already has complementary bond")
+        if self.complnb(m):
+            raise ValueError(f"Nb {m} already has complementary bond")
+
+        self._add_bond(n, m, 1)
+        self.clear_graph_cache()
+    
+
+    def split(self, n: int, m: int):
+        """
+        Breaks complementary bond between specified nbs if exists.
+        """
+        if n<0: n = len(self) + n
+        if m<0: m = len(self) + m
+        
+        if (not 0<=n<len(self)) or (not 0<=m<len(self)):
+            raise IndexError(f"Nb index is out of range")
+
+        if self.complnb(n)!=m:
+            raise ValueError(f"Nbs {n} and {m} does not have complementary bond")
+
+        self._remove_bond(n, m)
+        self.clear_graph_cache()
+
+
+    def clear_graph_cache(self):
+        for key in self.GRAPH_CACHE_KEYS:
+            if key in self.__dict__:
+                del self.__dict__[key]
     
 
     @cached_property

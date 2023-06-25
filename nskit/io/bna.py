@@ -305,13 +305,13 @@ class bnaRead:
         if meta: na.meta.update(meta)
         
         for i, nb in enumerate(seq):
-            _ = na.add_node(nb)
+            _ = na._add_node(nb)
             if i>0:
-                na.add_bond(i-1, i, 0)
+                na._add_bond(i-1, i, 0)
                 
         if len(pairs):
             for o, e in pairs:
-                na.add_bond(o, e, 1)
+                na._add_bond(o, e, 1)
         else:
             na.__dict__['struct'] = None
 

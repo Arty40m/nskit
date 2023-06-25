@@ -132,9 +132,9 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
         if meta: na.meta.update(meta)
             
         for i, nb in enumerate(seq):
-            _ = na.add_node(nb)
+            _ = na._add_node(nb)
             if i>0:
-                na.add_bond(i-1, i, 0)
+                na._add_bond(i-1, i, 0)
             
         adj = np.triu(adj, 1) # mask diagonal and lower triangle
         vec = np.argmax(adj, axis=-1)
@@ -147,7 +147,7 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
                     continue
                 raise InvalidStructure(f"Sharp helix between nbs {o} and {e}, use fix_sharp_helixes=True to omit such bonds")
                 
-            na.add_bond(o, e, 1)
+            na._add_bond(o, e, 1)
             
         return na
     
