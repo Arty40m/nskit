@@ -39,7 +39,8 @@ class Residue():
 
 class pdbRead:
     def __init__(self, file: Union[str, Path, TextIOWrapper], *, 
-                 assert_non_sequential: bool = False 
+                 assert_non_sequential: bool = False, 
+                 split_chain_by_name: bool = False
                  ):
         if isinstance(file, (str, Path)):
             self._file = open(file)
@@ -49,6 +50,7 @@ class pdbRead:
             raise TypeError(f"Invalid file type. Accepted - string, Path, TextIOWrapper")
         
         self.assert_non_sequential = assert_non_sequential
+        self.split_chain_by_name = split_chain_by_name
         
         
     def __enter__(self):
@@ -81,26 +83,24 @@ class pdbRead:
         chains = self.parse_chains()
         chains = self.classify_chains(chains)
         return chains
+    
+
+    def get_residue_type(self, res_name: str) -> str:
+        if res_name in AMIN_NAMES:
+            return 'amins'
+        
+        if res_name.strip(" D35") in NA_NAMES:
+            return 'nas'
+        
+        return 'ligand'
 
 
     def classify_chains(self, chains: List[List[Residue]]) -> Dict:
         classes = {"nas":None, "amins":None, "ligands":None}
 
         for chain in chains:
-            typ = None
+            typ = self.get_residue_type(chain[0].res_name)
 
-            for res in chain:
-                if res.res_name in AMIN_NAMES:
-                    typ = 'amins'
-                    break
-                
-                elif res.res_name.strip(" D35") in NA_NAMES:
-                    typ = 'nas'
-                    break
-            
-            if typ is None: 
-                typ = 'ligands'
-            
             if classes[typ] is None: 
                 classes[typ] = []
             
@@ -111,9 +111,10 @@ class pdbRead:
 
     def parse_chains(self) -> List:
         chains = []
-        current_resn = 0
+        last_res_n = 0
         res_tokens = []
         chain_ress = []
+        last_res_type = None
 
         for line in self._file:
 
@@ -122,6 +123,7 @@ class pdbRead:
                 line.startswith("MODEL") or \
                 line.startswith("ENDMDL")):
 
+                # remaining residue
                 if len(res_tokens)>0: 
                     chain_ress.append(Residue(res_tokens))
                     res_tokens = []
@@ -129,21 +131,38 @@ class pdbRead:
                 if len(chain_ress)>0:
                     chains.append(chain_ress)
                     chain_ress = []
-                    current_resn = 0
+                    last_res_n = 0
 
             elif line.startswith('ATOM') or (line.startswith('HETATM')):
                 tokens = self.tokenize(line)
-                resn = tokens[3]
+                current_res_n = tokens[3]
+                current_res_type = self.get_residue_type(tokens[2])
 
-                # new residue
-                if resn!=current_resn:
-                    if (resn-current_resn)!=1 and self.assert_non_sequential:
-                        raise InvalidPDB(f"Residue numbers must be sequential, got {resn} after {current_resn}")
+                # implicit chain split by different names
+                if current_res_type!=last_res_type and \
+                        len(res_tokens)>0 and \
+                        self.split_chain_by_name:
+
+                    chain_ress.append(Residue(res_tokens))
+                    chains.append(chain_ress)
+                    res_tokens = []
+                    chain_ress = []
+                    last_res_n = current_res_n
+                    last_res_type = current_res_type
+                    res_tokens.append(tokens)
+                    continue
+
+                # new residue in the same chain
+                if current_res_n!=last_res_n:
+                    if (current_res_n-last_res_n)!=1 and self.assert_non_sequential:
+                        raise InvalidPDB((f"Residue numbers must be sequential, got "
+                                          "{current_res_n} after {last_res_n}"))
 
                     if len(res_tokens)>0: 
                         chain_ress.append(Residue(res_tokens))
                         res_tokens = []
-                    current_resn = resn
+                    last_res_n = current_res_n
+                    last_res_type = current_res_type
 
                 res_tokens.append(tokens)
             

@@ -76,13 +76,19 @@ class pdbParse:
         self.min_energy_threshold = min_energy_threshold
 
 
-    def parse(self, file: Union[str, Path, TextIOWrapper], *, 
-             ignore_nonstandard_residues: bool = False, 
-             with_energy_matrix: bool = False, 
-             return_single_chain: bool = False,
-             ) -> List[NucleicAcid]:
+    def parse(
+            self, file: Union[str, Path, TextIOWrapper], *, 
+            assert_non_sequential: bool = False,
+            split_chain_by_name: bool = False,
+            
+            ignore_nonstandard_residues: bool = False, 
+            with_energy_matrix: bool = False, 
+            return_single_chain: bool = False
+              ) -> List[NucleicAcid]:
         
-        with pdbRead(file) as f:
+        with pdbRead(file, 
+                     assert_non_sequential=assert_non_sequential, 
+                     split_chain_by_name=split_chain_by_name) as f:
             chains = f.read()['nas']
 
         if chains is None:
