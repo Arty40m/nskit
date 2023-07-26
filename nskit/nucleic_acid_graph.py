@@ -3,14 +3,14 @@ from typing import List, Optional, Tuple
 import numpy as np
 import numpy
 
-from .graph import Graph
+from .graph import SimplifiedLinearGraph
 
 
 
 HELIX_ORDER = {0:'()', 1:'[]', 2:'{}', 3:'<>', 4:'Aa', 5:'Bb', 6:'Cc', 7:'Dd', 8:'Ee', 9:'Ff'}
 
 
-class NucleicAcidGraph(Graph):
+class NucleicAcidGraph(SimplifiedLinearGraph):
 
     GRAPH_CACHE_KEYS = ('struct', 'pairs', 'helixes', 'helix_orders', 'knots', 'knot_helixes', 'knot_pairs')
     
@@ -19,11 +19,8 @@ class NucleicAcidGraph(Graph):
         
         
     def complnb(self, n: int) -> Optional[int]:
-        for m, bond_type in self._bonds[n].items():
-            if bond_type:
-                return m
-        return None
-    
+        return self._bonds.get(n, None)
+        
 
     def join(self, n: int, m: int):
         """
@@ -43,7 +40,7 @@ class NucleicAcidGraph(Graph):
         if self.complnb(m):
             raise ValueError(f"Nb {m} already has complementary bond")
 
-        self._add_bond(n, m, 1)
+        self._add_bond(n, m)
         self.clear_graph_cache()
     
 
@@ -73,19 +70,18 @@ class NucleicAcidGraph(Graph):
     @cached_property
     def pairs(self) -> Tuple[Tuple[int, int]]:
         pairs = []
-        visited = set()
+        used = set()
         
-        for n in self._bonds:
-            if n in visited:
+        bond_pairs = sorted(self._bonds.items(), key=lambda x: x[0])
+        for o, e in bond_pairs:
+            if o in used:
                 continue
                 
-            for m, bond_type in self._bonds[n].items():
-                if bond_type:
-                    pairs.append((n, m))
-                    visited.add(m)
-                    
+            pairs.append((o, e))
+            used.add(e)
+        
         return tuple(pairs)
-    
+        
     
     @cached_property
     def helixes(self) -> Tuple[Tuple[int]]:

@@ -143,12 +143,10 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
     
     for i, nb in enumerate(seq):
         _ = na._add_node(nb)
-        if i>0:
-            na._add_bond(i-1, i, 0)
             
     if struct:
         for o, e in pairs:
-            na._add_bond(o, e, 1)
+            na._add_bond(o, e)
     else:
         na.__dict__['struct'] = None
     

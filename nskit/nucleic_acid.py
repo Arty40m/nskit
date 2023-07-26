@@ -44,7 +44,7 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
         
     @property
     def seq(self) -> str:
-        return ''.join([nb for _, nb in self._nodes.items()])
+        return ''.join(self._nodes)
     
     
     @cached_property
@@ -148,8 +148,6 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
             
         for i, nb in enumerate(seq):
             _ = na._add_node(nb)
-            if i>0:
-                na._add_bond(i-1, i, 0)
             
         adj = np.triu(adj, 1) # mask diagonal and lower triangle
         vec = np.argmax(adj, axis=-1)
@@ -162,7 +160,7 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
                     continue
                 raise InvalidStructure(f"Sharp helix between nbs {o} and {e}, use fix_sharp_helixes=True to omit such bonds")
                 
-            na._add_bond(o, e, 1)
+            na._add_bond(o, e)
             
         return na
     
