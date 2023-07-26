@@ -162,6 +162,16 @@ class TestBpseq:
             assert na.struct=='(..)'
             
             
+    def test_allow_sharp_helix(self):
+        fp = tempfile.TemporaryFile('w+')
+        fp.write(sharp_helix_bpseq)
+        fp.seek(0)
+
+        with bpseqRead(fp, allow_sharp_helixes=True) as f:
+            na = f.read()
+            assert na.struct=='(())'
+            
+            
     def test_sharp_helix_omit(self):
         fp = tempfile.TemporaryFile('w+')
         fp.write(sharp_helix_bpseq)

@@ -16,7 +16,7 @@ class bpseqRead:
     def __init__(self, file: Union[str, Path, TextIOWrapper], *, 
                  raise_na_errors: bool = False, 
                  file_as_name: bool = False, 
-                 filter_linear_structures: bool = False, 
+                 allow_sharp_helixes: bool = False, 
                  fix_sharp_helixes: bool = False
                 ):
         
@@ -26,9 +26,12 @@ class bpseqRead:
             self._file = file
         else:
             raise TypeError(f"Invalid file type. Accepted - string, Path, TextIOWrapper")
+            
+        if allow_sharp_helixes and fix_sharp_helixes:
+            raise TypeError("Both allow_sharp_helixes and fix_sharp_helixes = True is ambiguous")
         
         self.raise_na_errors = raise_na_errors
-        self.filter_linear_structures = filter_linear_structures
+        self.allow_sharp_helixes = allow_sharp_helixes
         self.fix_sharp_helixes = fix_sharp_helixes
         self.name = os.path.basename(file).split('.')[0] if file_as_name else None
             
@@ -71,12 +74,14 @@ class bpseqRead:
                 if not compl:
                     continue
                     
-                if abs(idx-compl)==1:
+                if abs(idx-compl)==1 and not self.allow_sharp_helixes:
                     if self.fix_sharp_helixes:
                         continue
                         
                     if self.raise_na_errors:
-                        raise InvalidStructure(f"Sharp helix between nbs {idx-1} and {compl-1}, use fix_sharp_helixes=True to omit such bonds")
+                        raise InvalidStructure(f"Sharp helix between nbs {idx-1} and {compl-1}, "
+                                               f"use fix_sharp_helixes=True to omit such bonds or "
+                                               f"allow_sharp_helixes=True to allow such bonds")
                     return None
                         
                 pairs[idx-1] = compl-1
@@ -106,11 +111,6 @@ class bpseqRead:
                 if self.raise_na_errors:
                     raise InvalidStructure(f"Nucleic base {e} has two bonds")
                 return None
-                
-        if not len(pairs) and self.filter_linear_structures:
-            if self.raise_na_errors:
-                raise InvalidStructure(f"bpseq structure does not contain any bond")
-            return None
 
         # make na
         na = NucleicAcid()
@@ -131,14 +131,16 @@ class bpseqDirRead:
     def __init__(self, Dir: Union[str, Path], *, 
                  raise_na_errors: bool = False, 
                  file_as_name: bool = False, 
-                 filter_linear_structures: bool = False, 
+                 allow_sharp_helixes: bool = False, 
+                 fix_sharp_helixes: bool = False
                 ):
             
         self._dir = Path(Dir)
         
         self.raise_na_errors = raise_na_errors
-        self.filter_linear_structures = filter_linear_structures
         self.file_as_name = file_as_name
+        self.allow_sharp_helixes = allow_sharp_helixes
+        self.fix_sharp_helixes = fix_sharp_helixes
 
         self._iterator = self._iterate()
         
@@ -167,8 +169,9 @@ class bpseqDirRead:
             path = self._dir/file
             with bpseqRead(path, 
                            raise_na_errors=self.raise_na_errors, 
-                           filter_linear_structures=self.filter_linear_structures, 
-                           file_as_name=self.file_as_name
+                           file_as_name=self.file_as_name, 
+                           allow_sharp_helixes=self.allow_sharp_helixes, 
+                           fix_sharp_helixes=self.fix_sharp_helixes
                           ) as f:
                 yield f.read()
         

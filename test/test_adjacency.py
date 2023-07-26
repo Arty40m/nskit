@@ -92,3 +92,14 @@ class TestAdjacency:
     def test_sharp_helix_fix(self):
         na = NucleicAcid.from_adjacency(sharp_helix, fix_sharp_helixes=True)
         assert na.struct == '(..)'
+        
+    
+    def test_allow_sharp_helix(self):
+        na = NucleicAcid.from_adjacency(sharp_helix, allow_sharp_helixes=True)
+        assert na.struct == '(())'
+        
+        
+        
+        
+        
+        

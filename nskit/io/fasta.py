@@ -12,7 +12,7 @@ class FastaRead(DotFastaRead):
     
     def __init__(self, file: Union[str, Path], *,  
                  raise_na_errors: bool = False,
-                 upper_sequence: bool = True,
+                 upper_sequence: bool = False,
                 ):
         
         super().__init__(file)

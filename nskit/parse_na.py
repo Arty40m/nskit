@@ -38,7 +38,8 @@ def parse_arguments(a:Optional[str], b:Optional[str]) -> Tuple[Optional[str], Op
         struct = b
         
         if len(seq)!=len(struct):
-            raise InvalidStructure(f"Sequence and dot structure must have equal length, got {len(seq)} and {len(struct)}")
+            raise InvalidStructure(f"Sequence and dot structure must have equal length, "
+                                   f"got {len(seq)} and {len(struct)}")
         
     elif len(set(a) & STRUCTURE_DETECTION_SYMBOLS):
         struct = a
@@ -52,7 +53,7 @@ def parse_arguments(a:Optional[str], b:Optional[str]) -> Tuple[Optional[str], Op
 
 def parse_structure(struct: str, 
                     ignore_unclosed_bonds: bool, 
-                    filter_linear_structures: bool, 
+                    allow_sharp_helixes: bool, 
                     fix_sharp_helixes: bool
                    ) -> List:
     pairs = []
@@ -73,20 +74,20 @@ def parse_structure(struct: str,
             if op_idx is None:
                 if ignore_unclosed_bonds:
                     continue
-                raise InvalidStructure(f"Closing bond {s} at index {i} has no open pair, use ignore_unclosed_bonds=True to omit such bonds")
+                raise InvalidStructure(f"Closing bond {s} at index {i} has no open pair, "
+                                       f"use ignore_unclosed_bonds=True to omit such bonds")
                 
-            if abs(op_idx-i)==1:
+            if abs(op_idx-i)==1 and not allow_sharp_helixes:
                 if fix_sharp_helixes:
                     continue
-                raise InvalidStructure(f"Sharp helix between nbs {op_idx} and {i}, use fix_sharp_helixes=True to omit such bonds")
+                raise InvalidStructure(f"Sharp helix between nbs {op_idx} and {i}, "
+                                       f"use fix_sharp_helixes=True to omit such bonds or "
+                                       f"allow_sharp_helixes=True to allow such bonds")
                     
             pairs.append((op_idx, i))
 
     if not stack.isempty() and not ignore_unclosed_bonds:
         raise InvalidStructure(f"Structure contains unclosed bonds, use ignore_unclosed_bonds=True to omit such bonds")
-
-    if filter_linear_structures and len(pairs)==0:
-        raise InvalidStructure(f"Dot structure does not contain any valid bond")
         
     return pairs
     
@@ -94,10 +95,10 @@ def parse_structure(struct: str,
 def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *, 
        name: Optional[str] = None, 
        meta: Optional[dict] = None,
-       filter_linear_structures: bool = False, 
+       allow_sharp_helixes: bool = False,
        fix_sharp_helixes: bool = False, 
        ignore_unclosed_bonds: bool = False, 
-       upper_sequence: bool = True,
+       upper_sequence: bool = False,
       ) -> NucleicAcid:
     """
     Parse dotbracket strings into NucleicAcid.
@@ -106,7 +107,7 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
     :param b: structure if sequence is provided.
     :param name: na name.
     :param meta: dictionary of meta information convertable to string.
-    :param filter_linear_structures: raise error on structure with no complementary bonds. Default - False.  
+    :param allow_sharp_helixes: allow bond betwee neighboring nbs. Default - False.
     :param fix_sharp_helixes: remove bond between neighboring nbs to fix sharp helixes. Default - False.
     :param ignore_unclosed_bonds: omit single unpaired parentheses without raising error. Default - False.
     :param upper_sequence: upper sequence characters. Default - True.
@@ -119,6 +120,9 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
         
     if isinstance(a, NucleicAcid): 
         return a
+    
+    if allow_sharp_helixes and fix_sharp_helixes:
+        raise TypeError("Both allow_sharp_helixes and fix_sharp_helixes = True is ambiguous")
         
     seq, struct = parse_arguments(a, b)
      
@@ -134,7 +138,7 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
         
     # parse structure
     if struct:
-        pairs = parse_structure(struct, ignore_unclosed_bonds, filter_linear_structures, fix_sharp_helixes)
+        pairs = parse_structure(struct, ignore_unclosed_bonds, allow_sharp_helixes, fix_sharp_helixes)
     
     # create graph
     na = NucleicAcid()

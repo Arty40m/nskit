@@ -43,9 +43,8 @@ class TestBondEditing:
     @pytest.mark.parametrize(
         "i, j",
         [
-            # sharp
+            # self-bond
             (1, 1),
-            (0, 1),
 
             # multibond
             (0, 2),
@@ -55,6 +54,12 @@ class TestBondEditing:
     def test_join_value_error(self, i, j, na):
         with pytest.raises(ValueError):
             na.join(i, j)
+            
+    
+    @pytest.mark.filterwarnings("ignore:")
+    def test_join_sharp_helix(self, na):
+        na.join(0, 1)
+        assert na.struct == "()(((..[[...).))..]]."
 
 
     @pytest.mark.parametrize(

@@ -1,4 +1,5 @@
 from functools import cached_property
+import warnings
 from typing import List, Optional, Tuple
 import numpy as np
 import numpy
@@ -32,8 +33,11 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
         if (not 0<=n<len(self)) or (not 0<=m<len(self)):
             raise IndexError(f"Nb index is out of range")
 
-        if abs(n-m)<2: 
-            raise ValueError("At least 1 nb must be between joining nbs")
+        if n==m: 
+            raise ValueError("Can not join nb with itself")
+            
+        if abs(n-m)==1:
+            warnings.warn(f"Nbs {n} and {m} form sharp helix")
 
         if self.complnb(n):
             raise ValueError(f"Nb {n} already has complementary bond")

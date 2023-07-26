@@ -98,8 +98,9 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
                        seq: Optional[str] = None,
                        name: Optional[str] = None,
                        meta: Optional[dict] = None,
-                       upper_sequence: bool = True, 
-                       fix_sharp_helixes: bool = False, 
+                       upper_sequence: bool = False,
+                       allow_sharp_helixes: bool = False,
+                       fix_sharp_helixes: bool = False,
                        trust_adj: bool = False
                       ) -> 'NucleicAcid':
         """
@@ -109,12 +110,16 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
         :param seq: na sequence.
         :param name: na name.
         :param meta: dictionary of meta information convertable to string.
-        :param upper_sequence: upper sequence characters. Default - True.
+        :param upper_sequence: upper sequence characters. Default - False.
+        :param allow_sharp_helixes: allow bond betwee neighboring nbs. Default - False.
         :param fix_sharp_helixes: remove bond between neighboring nbs to fix sharp helixes. Default - False.
         :param trust_adj: whether to skip adjacency validation. Validation has O(N^2) time complexity. Default - False.
 
         :return: NucleicAcid object.
         """ 
+        
+        if allow_sharp_helixes and fix_sharp_helixes:
+            raise TypeError("Both allow_sharp_helixes and fix_sharp_helixes = True is ambiguous")
         
         if len(adj.shape)!=2 or adj.shape[0]!=adj.shape[1]:
             raise InvalidAdjacency(f"Adjacency must be a square matrix, got shape: {adj.shape}")
@@ -155,10 +160,12 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
             if e==0: 
                 continue
 
-            if abs(o-e)==1:
+            if abs(o-e)==1 and not allow_sharp_helixes:
                 if fix_sharp_helixes:
                     continue
-                raise InvalidStructure(f"Sharp helix between nbs {o} and {e}, use fix_sharp_helixes=True to omit such bonds")
+                raise InvalidStructure(f"Sharp helix between nbs {o} and {e}, "
+                                       f"use fix_sharp_helixes=True to omit such bonds or "
+                                       f"allow_sharp_helixes=True to allow such bonds")
                 
             na._add_bond(o, e)
             
