@@ -110,7 +110,7 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
     :param allow_sharp_helixes: allow bond betwee neighboring nbs. Default - False.
     :param fix_sharp_helixes: remove bond between neighboring nbs to fix sharp helixes. Default - False.
     :param ignore_unclosed_bonds: omit single unpaired parentheses without raising error. Default - False.
-    :param upper_sequence: upper sequence characters. Default - True.
+    :param upper_sequence: upper sequence characters. Default - False.
 
     :return: NucleicAcid object.
     """ 

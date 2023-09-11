@@ -1,5 +1,4 @@
-from abc import ABC, abstractmethod
-from typing import Iterator, Optional, Union, List
+from typing import Iterator, Iterable, Optional, Union, List
 from pathlib import Path
 from io import TextIOWrapper
 
@@ -8,7 +7,7 @@ from ..exceptions import InvalidFasta
 
 
 
-class DotFastaRead(ABC):
+class dotLinesRead:
 
     def __init__(self, file: Union[str, Path, TextIOWrapper]):
         if isinstance(file, (str, Path)):
@@ -51,7 +50,6 @@ class DotFastaRead(ABC):
             raise InvalidFasta(f"First line name without '>'")
         
         lines = [line]
-        last_name_idx = 1
         i = 0
         
         while True:
@@ -63,32 +61,24 @@ class DotFastaRead(ABC):
             if not line: continue # empty line
             
             if line.startswith(">"): # new na
-                yield self._make_na(lines, last_name_idx)
+                yield tuple(lines)
                 lines = [line]
-                last_name_idx = i+1
                 continue
             
             lines.append(line)
             
-        yield self._make_na(lines, last_name_idx)
+        yield tuple(lines)
 
         
-    def __iter__(self) -> Iterator[Optional[NucleicAcid]]:
+    def __iter__(self) -> Iterator[Iterable[str]]:
         return self._iterator
                     
                     
-    def __next__(self) -> Optional[NucleicAcid]:
+    def __next__(self) -> Iterable[str]:
         return next(self._iterator)
-    
-    
-    @abstractmethod
-    def _make_na(self, lines: List[str], last_name_idx: int) -> Optional[NucleicAcid]:
-        """
-        Makes NucleicAcid from lines
-        """
             
 
-class DotFastaWrite(ABC):
+class dotLinesWrite:
     
     def __init__(self, file: Union[str, Path, TextIOWrapper], *, 
                  append: bool = False,
@@ -114,8 +104,23 @@ class DotFastaWrite(ABC):
         self.close()
 
 
-    @abstractmethod
-    def write(self, data: Union[NucleicAcid, tuple, list], **kwargs):
-        """
-        Writes na to file 
-        """
+    def write(self, data: Iterable[str], **kwargs):
+        if len(data)<2:
+            raise ValueError(f"At least two lines required")
+            
+        if not all([isinstance(d, str) for d in data]):
+            raise ValueError(f"All passed data must be strings")
+            
+        self._file.write(f"{data[0]}\n")
+        for i in range(1, len(data)):
+            self._file.write(f"{data[i]}\n")
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        

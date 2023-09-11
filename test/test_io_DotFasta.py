@@ -1,6 +1,6 @@
 import pytest
 import tempfile
-from nskit import NA, DotRead, DotWrite, FastaRead, FastaWrite
+from nskit import NA, dotRead, dotWrite, fastaRead, fastaWrite, dotLinesRead, dotLinesWrite
 from nskit.exceptions import InvalidFasta
 
 
@@ -30,6 +30,7 @@ nas = [
     NA('AAATTT', '(.[.)]', name='Seq4', meta={'param':'[1,2,3]'})
 ]
 
+
 def file_with_sharp_helix():
     fp = tempfile.TemporaryFile('w+')
     fp.write(">seq\nCUUCGUGGC\n.().((.))")
@@ -44,7 +45,7 @@ class TestDotBracket:
         fp.write(dot_file)
         fp.seek(0)
 
-        with DotRead(fp, ignore_unclosed_bonds=True) as f:
+        with dotRead(fp, ignore_unclosed_bonds=True) as f:
             for i, na in enumerate(f):
                 true_na = nas[i]
                 assert na.seq==true_na.seq
@@ -55,21 +56,21 @@ class TestDotBracket:
     
     def test_sharp_helix(self):
         fp = file_with_sharp_helix()
-        with DotRead(fp) as f:
+        with dotRead(fp) as f:
             na = next(f)
             assert na is None
             
             
     def test_sharp_helix_fix(self):
         fp = file_with_sharp_helix()
-        with DotRead(fp, fix_sharp_helixes=True) as f:
+        with dotRead(fp, fix_sharp_helixes=True) as f:
             na = next(f)
             assert na.struct == "....((.))"
             
             
     def test_allow_sharp_helix(self):
         fp = file_with_sharp_helix()
-        with DotRead(fp, allow_sharp_helixes=True) as f:
+        with dotRead(fp, allow_sharp_helixes=True) as f:
             na = next(f)
             assert na.struct == ".().((.))"
                 
@@ -79,20 +80,20 @@ class TestDotBracket:
         fp.write(">seq1\n\n>seq2\naaa")
         fp.seek(0)
 
-        with DotRead(fp) as f:
+        with dotRead(fp) as f:
             with pytest.raises(InvalidFasta):
                 _=next(f)
 
 
     def test_write(self):
         fp = tempfile.TemporaryFile('w+')
-        with DotWrite(fp) as w:
+        with dotWrite(fp) as w:
             for na in nas:
                 w.write(na)
 
             fp.seek(0)
 
-            with DotRead(fp) as f:
+            with dotRead(fp) as f:
                 for i, na in enumerate(f):
                     true_na = nas[i]
                     assert na.seq==true_na.seq
@@ -119,24 +120,47 @@ class TestFasta:
         fp.write(fasta_file)
         fp.seek(0)
 
-        with FastaRead(fp) as f:
+        with fastaRead(fp) as f:
             na = next(f)
             assert na.seq==fasta_seq
             assert na.name=="seq"
 
 
     def test_write(self):
-        na1 = NA(fasta_seq)
+        na1 = NA(fasta_seq, name='test_seq')
 
         fp = tempfile.TemporaryFile('w+')
-        with FastaWrite(fp) as w:
-            w.write(['test_seq', fasta_seq])
+        with fastaWrite(fp) as w:
+            w.write(na1)
             
             fp.seek(0)
             assert len(fp.readlines())==4
             fp.seek(0)
 
-            with FastaRead(fp) as f:
+            with fastaRead(fp) as f:
                 na2 = next(f)
             
         assert na1.seq==na2.seq
+
+        
+raw_lines = [
+    ('>seq1', 'fff', '...'), 
+    ('>seq1', 'ffttt', '...(())', 'e:2'), 
+    ('>seq1', 'CCCC')
+]
+
+class TestFasta:
+    
+    def test_read_write(self):
+        fp = tempfile.TemporaryFile('w+')
+        with dotLinesWrite(fp) as w:
+            for lines in raw_lines:
+                w.write(lines)
+
+            fp.seek(0)
+
+            with dotLinesRead(fp) as f:
+                for i, lines in enumerate(f):
+                    assert lines==raw_lines[i]
+            
+            

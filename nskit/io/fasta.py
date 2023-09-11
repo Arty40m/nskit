@@ -1,14 +1,14 @@
-from typing import Optional, Union, List
+from typing import Iterator, Iterable, Optional, Union, List
 from pathlib import Path
 
-from ._DotFasta import DotFastaRead, DotFastaWrite
+from .dotLines import dotLinesRead, dotLinesWrite
 from ..parse_na import NA
 from ..nucleic_acid import NucleicAcid
 from ..exceptions import *
 
 
 
-class FastaRead(DotFastaRead):
+class fastaRead(dotLinesRead):
     
     def __init__(self, file: Union[str, Path], *,  
                  raise_na_errors: bool = False,
@@ -19,11 +19,26 @@ class FastaRead(DotFastaRead):
 
         self.raise_na_errors = raise_na_errors
         self.upper_sequence = upper_sequence
+        
+        self._na_iterator = self._na_iterate()
+        
+        
+    def _na_iterate(self):
+        for i, lines in enumerate(self._iterator):
+            yield self._make_na(lines, i)
+        
+    
+    def __iter__(self) -> Iterator[Optional[NucleicAcid]]:
+        return self._na_iterator
+                    
+                    
+    def __next__(self) -> Optional[NucleicAcid]:
+        return next(self._na_iterator)
     
     
-    def _make_na(self, lines: List[str], last_name_idx: int) -> Optional[NucleicAcid]:
+    def _make_na(self, lines: List[str], last_na_idx: int) -> Optional[NucleicAcid]:
         if len(lines)<2:
-            raise InvalidFasta(f"Empty structure (structure at line {last_name_idx})")
+            raise InvalidFasta(f"Empty structure (structure at line {last_na_idx})")
             
         name = lines[0].strip(">")
         seq = ''.join([l.strip("*") for l in lines[1:] if not l.startswith(";")])
@@ -45,7 +60,7 @@ class FastaRead(DotFastaRead):
         return na
     
     
-class FastaWrite(DotFastaWrite):
+class fastaWrite(dotLinesWrite):
     
     def __init__(self, file, *, 
                  append: bool = False,
@@ -54,35 +69,27 @@ class FastaWrite(DotFastaWrite):
         super().__init__(file, append=append)
         
         
-    def write(self, data: Union[NucleicAcid, tuple, list]):
+    def write(self, na: NucleicAcid):
         
-        if isinstance(data, NucleicAcid):
-            name = data.name or 'Seq'
-            seq = data.seq
+        if not isinstance(na, NucleicAcid):
+            raise ValueError(f"Data must be NucleicAcid container, got {type(na)}")
             
-        elif isinstance(data, (tuple, list)):
-            if len(data)!=2:
-                raise ValueError(f"Tuple of structure must contain name and sequence")
-                
-            name = data[0]
-            seq = data[1]
+        name = f">{na.name}" or '>Seq'
+        seq = na.seq
         
-        else:
-            raise ValueError(f"Data must be NucleicAcid or tuple/list with data, got {type(data)}")
-            
         # split seq to chunks of 80 nb
-        chunks = []
+        lines = [name]
         i=0
         for i in range(len(seq)//80):
-            chunks.append(seq[i*80 : (i+1)*80])
+            lines.append(seq[i*80 : (i+1)*80])
 
         if len(seq)%80!=0:
-            chunks.append(seq[(i+1)*80:])
+            lines.append(seq[(i+1)*80:])
 
-
-        self._file.write(f">{name}\n")
-        for chunk in chunks:
-            self._file.write(f"{chunk}\n")
+        super().write(lines)
+                
+                
+                
                 
                 
                 

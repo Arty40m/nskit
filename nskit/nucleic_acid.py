@@ -178,18 +178,18 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
                write_meta: bool = True
                ):
         
-        from .io import DotWrite
+        from .io import dotWrite
         
-        with DotWrite(path, append=append) as w:
+        with dotWrite(path, append=append) as w:
             w.write(self, write_struct=write_struct, write_meta=write_meta)
 
     
     def to_fasta(self, path: Union[str, Path], *, 
                  append: bool = False, 
                  ):
-        from .io import FastaWrite
+        from .io import fastaWrite
         
-        with FastaWrite(path, append=append) as w:
+        with fastaWrite(path, append=append) as w:
             w.write(self)
 
 

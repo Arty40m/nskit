@@ -1,7 +1,7 @@
-from typing import Optional, Union, List
+from typing import Iterator, Iterable, Optional, Union, List
 from pathlib import Path
 
-from ._DotFasta import DotFastaRead, DotFastaWrite
+from .dotLines import dotLinesRead, dotLinesWrite
 from ..parse_na import NA
 from ..nucleic_acid import NucleicAcid
 from ..exceptions import InvalidFasta, InvalidDotBracket, InvalidSequence, InvalidStructure
@@ -11,7 +11,7 @@ from ..exceptions import InvalidFasta, InvalidDotBracket, InvalidSequence, Inval
 META_SEPARATOR = ": "
 
 
-class DotRead(DotFastaRead):
+class dotRead(dotLinesRead):
     
     def __init__(self, file: Union[str, Path], *, 
                  raise_na_errors: bool = False, 
@@ -28,11 +28,26 @@ class DotRead(DotFastaRead):
         self.fix_sharp_helixes = fix_sharp_helixes
         self.ignore_unclosed_bonds = ignore_unclosed_bonds
         self.upper_sequence = upper_sequence
+        
+        self._na_iterator = self._na_iterate()
+        
     
+    def _na_iterate(self):
+        for i, lines in enumerate(self._iterator):
+            yield self._make_na(lines, i)
+        
     
-    def _make_na(self, lines: List[str], last_name_idx: int) -> Optional[NucleicAcid]:
+    def __iter__(self) -> Iterator[Optional[NucleicAcid]]:
+        return self._na_iterator
+                    
+                    
+    def __next__(self) -> Optional[NucleicAcid]:
+        return next(self._na_iterator)
+        
+        
+    def _make_na(self, lines: List[str], last_na_idx: int) -> Optional[NucleicAcid]:
         if len(lines)<2:
-            raise InvalidFasta(f"Empty structure (structure at line {last_name_idx})")
+            raise InvalidFasta(f"Empty structure at index {last_na_idx}")
             
         name = lines[0].strip(" >")
         seq = lines[1]
@@ -58,7 +73,8 @@ class DotRead(DotFastaRead):
             for ml in lines:
                 toks = ml.strip().split(META_SEPARATOR)
                 if len(toks)!=2:
-                    raise InvalidDotBracket(f"Meta information must contain one separation token '{META_SEPARATOR}' (structure at line {last_name_idx})")
+                    raise InvalidDotBracket(f"Meta information must contain one separation token '{META_SEPARATOR}' " 
+                                            f"(structure at index {last_na_idx}")
                 
                 k, v = toks
                 meta[k] = v
@@ -84,7 +100,7 @@ class DotRead(DotFastaRead):
         return na
     
     
-class DotWrite(DotFastaWrite):
+class dotWrite(dotLinesWrite):
     
     def __init__(self, file, *, 
                  append: bool = False,
@@ -93,37 +109,26 @@ class DotWrite(DotFastaWrite):
         super().__init__(file, append=append)
         
         
-    def write(self, data: Union[NucleicAcid, tuple, list], *, 
+    def write(self, na: NucleicAcid, *, 
               write_struct: bool = True, 
               write_meta: bool = True
              ):
         
-        if isinstance(data, NucleicAcid):
-            name = data.name or 'Seq'
-            seq = data.seq
-            struct = data.struct
-            meta = data.meta
-            
-        elif isinstance(data, (tuple, list)):
-            if len(data)<2:
-                raise ValueError(f"Tuple of structure must contain at least name and sequence")
+        if not isinstance(na, NucleicAcid):
+            raise ValueError(f"Data must be NucleicAcid container, got {type(na)}")
+        
+        name = f">{na.name}" or '>Seq'
+        lines = [name, na.seq]
+        if na.struct is not None:
+            lines.append(na.struct)
+        
+        if na.meta and write_meta:
+            for k, v in na.meta.items():
+                lines.append(f"{k}{META_SEPARATOR}{str(v)}\n")
+        
+        super().write(lines)
                 
-            name = data[0]
-            seq = data[1]
-            struct = data[2] if len(data)>2 else None
-            meta = data[3] if len(data)>3 else None
-        
-        else:
-            raise ValueError(f"Data must be NucleicAcid or tuple/list with data, got {type(data)}")
-            
-        
-        self._file.write(f">{name}\n")
-        self._file.write(f"{seq}\n")
-        if struct and write_struct:
-            self._file.write(f"{struct}\n")
-        if meta and write_meta:
-            for k, v in meta.items():
-                self._file.write(f"{k}{META_SEPARATOR}{str(v)}\n")
+                
                 
                 
                 

@@ -4,8 +4,9 @@ from .parse_na import NA
 from .draw import edit_draw_config
 
 __all__ = ["NA", "NucleicAcid", 
-           "DotRead", "DotWrite", 
-           "FastaRead", "FastaWrite",
+           "dotLinesRead", "dotLinesWrite",
+           "dotRead", "dotWrite", 
+           "fastaRead", "fastaWrite",
            "bpseqRead", "bpseqDirRead", "bpseqWrite",
            "pdbRead", "pdbParse", 
            "bnaWrite", "bnaRead", 
