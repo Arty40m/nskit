@@ -132,7 +132,7 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
             intersection_orders = set(intersection_orders)
             if len(intersection_orders)>=10:
                 break
-            lowest_helix_order = min(set(range(10)) - intersection_orders) # lowest type of brackets
+            lowest_helix_order = min(set(range(len(HELIX_ORDER))) - intersection_orders) # lowest type of brackets
             orders[i] = lowest_helix_order
 
         return tuple(orders)
