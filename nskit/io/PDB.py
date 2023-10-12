@@ -5,7 +5,7 @@ from pathlib import Path
 from io import TextIOWrapper
 
 
-from ..nucleic_acid import NucleicAcid
+from ..containers.nucleic_acid import NucleicAcid
 from ._pdbRead import pdbRead
 from ..exceptions import InvalidPDB, InvalidSequence
 

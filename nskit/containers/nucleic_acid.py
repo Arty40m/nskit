@@ -5,8 +5,8 @@ import numpy
 import numpy as np
 
 from .nucleic_acid_graph import NucleicAcidGraph
-from .draw import DrawNA
-from .exceptions import InvalidSequence, InvalidAdjacency, InvalidStructure
+from ..draw import DrawNA
+from ..exceptions import InvalidSequence, InvalidAdjacency, InvalidStructure
 
 
 
@@ -178,7 +178,7 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
                write_meta: bool = True
                ):
         
-        from .io import dotWrite
+        from ..io import dotWrite
         
         with dotWrite(path, append=append) as w:
             w.write(self, write_struct=write_struct, write_meta=write_meta)
@@ -187,7 +187,7 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
     def to_fasta(self, path: Union[str, Path], *, 
                  append: bool = False, 
                  ):
-        from .io import fastaWrite
+        from ..io import fastaWrite
         
         with fastaWrite(path, append=append) as w:
             w.write(self)
@@ -196,7 +196,7 @@ class NucleicAcid(NucleicAcidGraph, DrawNA):
     def to_bpseq(self, path: Union[str, Path], *, 
                  write_meta: bool = True
                  ):
-        from .io import bpseqWrite
+        from ..io import bpseqWrite
         
         with bpseqWrite(path) as w:
             w.write(self, write_meta=write_meta)

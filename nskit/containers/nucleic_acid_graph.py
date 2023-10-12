@@ -5,6 +5,7 @@ import numpy as np
 import numpy
 
 from .graph import SimplifiedLinearGraph
+from ..containers.nucleic_acid_parts import Helix, Loop
 
 
 
@@ -88,7 +89,7 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
         
     
     @cached_property
-    def helixes(self) -> Tuple[Tuple[int]]:
+    def helixes(self) -> Tuple[Helix]:
         helixes = []
         op = []
         close = []
@@ -103,36 +104,37 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
                 op.append(o)
                 close.append(e)
             else:
-                helixes.append((tuple(op), tuple(close[::-1])))
+                helixes.append(Helix(tuple(op), tuple(close[::-1])))
                 op = [o]
                 close = [e]
 
         if len(op)!=0:
-            helixes.append((tuple(op), tuple(close[::-1])))
+            helixes.append(Helix(tuple(op), tuple(close[::-1])))
         
         return tuple(helixes)
         
         
     def _helix_intersect(self, current_helix, prev_helix) -> bool:
         # .(((..[[..)))..]].
-        return current_helix[0][-1]<prev_helix[1][0] and current_helix[1][0]>prev_helix[1][-1]
+        return current_helix.opc[-1]<prev_helix.clc[0] and current_helix.clc[0]>prev_helix.clc[-1]
 
 
     @cached_property
     def helix_orders(self) -> Tuple[int]:
         helixes = self.helixes
         orders = [0 for _ in range(len(helixes))]
+        order_range_set = set(range(len(HELIX_ORDER)))
 
         for i, h in enumerate(helixes):
-            intersection_orders = []
+            intersection_orders = set()
             for prev_h in range(i):
                 if self._helix_intersect(h, helixes[prev_h]):
-                    intersection_orders.append(orders[prev_h])
+                    intersection_orders.add(orders[prev_h])
 
-            intersection_orders = set(intersection_orders)
-            if len(intersection_orders)>=10:
+            if len(intersection_orders)>=len(HELIX_ORDER):
                 break
-            lowest_helix_order = min(set(range(len(HELIX_ORDER))) - intersection_orders) # lowest type of brackets
+
+            lowest_helix_order = min(order_range_set - intersection_orders) # lowest type of brackets
             orders[i] = lowest_helix_order
 
         return tuple(orders)
@@ -145,9 +147,9 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
 
         for i, h in enumerate(helixes):
             brackets = HELIX_ORDER[orders[i]]
-            for c in range(len(h[0])):
-                dots[h[0][c]] = brackets[0] # open bracket
-                dots[h[1][-(1+c)]] = brackets[1] # close bracket
+            for o, e in h:
+                dots[o] = brackets[0] # open bracket
+                dots[e] = brackets[1] # close bracket
 
         return ''.join(dots)
     
@@ -176,6 +178,11 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
         if self.helix_orders:
             return max(self.helix_orders)>0
         return False
+    
+    
+    @cached_property
+    def loops(self) -> Tuple[Loop]:
+        ...
 
 
     def get_adjacency(self) -> numpy.array:

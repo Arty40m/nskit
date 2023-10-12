@@ -1,6 +1,6 @@
 from .io import *
 from . import algo
-from .nucleic_acid import NucleicAcid
+from .containers.nucleic_acid import NucleicAcid
 from .parse_na import NA
 from .draw import edit_draw_config
 

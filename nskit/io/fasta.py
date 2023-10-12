@@ -3,7 +3,7 @@ from pathlib import Path
 
 from .dotLines import dotLinesRead, dotLinesWrite
 from ..parse_na import NA
-from ..nucleic_acid import NucleicAcid
+from ..containers.nucleic_acid import NucleicAcid
 from ..exceptions import *
 
 

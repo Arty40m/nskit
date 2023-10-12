@@ -3,7 +3,7 @@ from pathlib import Path
 from io import BufferedWriter, BufferedRandom
 import math
 
-from ..nucleic_acid import NucleicAcid
+from ..containers.nucleic_acid import NucleicAcid
 from ..exceptions import InvalidSequence
 
 
