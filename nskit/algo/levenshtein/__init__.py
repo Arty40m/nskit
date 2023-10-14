@@ -1,6 +1,6 @@
 from ._levenshtein import c_levenshtein
 from typing import Union
-from ...containers.nucleic_acid import NucleicAcid
+from ...containers import NucleicAcid
 
 
 

@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from io import TextIOWrapper
 
-from ..containers.nucleic_acid import NucleicAcid
+from ..containers import NucleicAcid
 from ..exceptions import InvalidStructure
 
 

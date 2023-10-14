@@ -1,11 +1,11 @@
 from functools import cached_property
 import warnings
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 import numpy as np
 import numpy
 
 from .graph import SimplifiedLinearGraph
-from ..containers.nucleic_acid_parts import Helix, Loop
+from .nucleic_acid_parts import Helix, _make_loop, Hairpin, InternalLoop, Bulge, Junction
 
 
 
@@ -14,7 +14,7 @@ HELIX_ORDER = {0:'()', 1:'[]', 2:'{}', 3:'<>', 4:'Aa', 5:'Bb', 6:'Cc', 7:'Dd', 8
 
 class NucleicAcidGraph(SimplifiedLinearGraph):
 
-    GRAPH_CACHE_KEYS = ('struct', 'pairs', 'helixes', 'helix_orders', 'knots', 'knot_helixes', 'knot_pairs')
+    GRAPH_CACHE_KEYS = ('struct', 'pairs', 'helixes', 'helix_orders', 'knots', 'knot_helixes', 'knot_pairs', 'loops')
     
     def __init__(self):
         super().__init__()
@@ -168,8 +168,8 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
     def knot_pairs(self) -> Tuple[tuple]:
         pairs = []
         for h in self.knot_helixes:
-            for i in range(len(h[0])):
-                pairs.append((h[0][i], h[1][-(1+i)]))
+            for p in h:
+                pairs.append(p)
 
         return tuple(pairs)
     
@@ -179,10 +179,55 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
             return max(self.helix_orders)>0
         return False
     
+    ################################  Loops
     
     @cached_property
-    def loops(self) -> Tuple[Loop]:
-        ...
+    def loops(self) -> Tuple[Union[Hairpin, InternalLoop, Bulge, Junction]]:
+        knots = set(self.knots)
+        knot_pairs = set(self.knot_pairs)
+
+        loops = []
+        for i, h in enumerate(self.helixes):
+            if i in knots:
+                continue
+
+            end_idx = h.clc[0]
+            loop = [h[-1],]
+            idx = h.opc[-1] + 1
+            while True:
+                if idx==end_idx: # end of the loop
+                    break
+
+                if (cidx:=self.complnb(idx)) and (idx, cidx) not in knot_pairs:
+                    loop.append((idx, cidx))
+                    idx = cidx+1
+                else:
+                    loop.append(idx)
+                    idx+=1
+
+            loops.append(_make_loop(loop))
+            
+        return tuple(loops)
+    
+    
+    @property
+    def hairpins(self):
+        return tuple([l for l in self.loops if isinstance(l, Hairpin)])
+    
+    
+    @property
+    def internal_loops(self):
+        return tuple([l for l in self.loops if isinstance(l, InternalLoop)])
+    
+    
+    @property
+    def bulges(self):
+        return tuple([l for l in self.loops if isinstance(l, Bulge)])
+    
+    
+    @property
+    def junctions(self):
+        return tuple([l for l in self.loops if isinstance(l, Junction)])
 
 
     def get_adjacency(self) -> numpy.array:

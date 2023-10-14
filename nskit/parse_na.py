@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Optional, Union, Tuple, List
 
-from .containers.nucleic_acid import NucleicAcid
+from .containers import NucleicAcid
 from .exceptions import InvalidSequence, InvalidStructure
 
 
