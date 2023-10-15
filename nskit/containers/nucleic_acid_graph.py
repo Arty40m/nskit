@@ -184,7 +184,10 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
     @cached_property
     def loops(self) -> Tuple[Union[Hairpin, InternalLoop, Bulge, Junction]]:
         knots = set(self.knots)
-        knot_pairs = set(self.knot_pairs)
+        knot_nbs = set()
+        for i, j in self.knot_pairs:
+            knot_nbs.add(i)
+            knot_nbs.add(j)
 
         loops = []
         for i, h in enumerate(self.helixes):
@@ -198,7 +201,7 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
                 if idx==end_idx: # end of the loop
                     break
 
-                if (cidx:=self.complnb(idx)) and (idx, cidx) not in knot_pairs:
+                if ((cidx:=self.complnb(idx)) is not None) and (idx not in knot_nbs):
                     loop.append((idx, cidx))
                     idx = cidx+1
                 else:
@@ -211,22 +214,22 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
     
     
     @property
-    def hairpins(self):
+    def hairpins(self) -> Tuple[Hairpin]:
         return tuple([l for l in self.loops if isinstance(l, Hairpin)])
     
     
     @property
-    def internal_loops(self):
+    def internal_loops(self) -> Tuple[InternalLoop]:
         return tuple([l for l in self.loops if isinstance(l, InternalLoop)])
     
     
     @property
-    def bulges(self):
+    def bulges(self) -> Tuple[Bulge]:
         return tuple([l for l in self.loops if isinstance(l, Bulge)])
     
     
     @property
-    def junctions(self):
+    def junctions(self) -> Tuple[Junction]:
         return tuple([l for l in self.loops if isinstance(l, Junction)])
 
 
