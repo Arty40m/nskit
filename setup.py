@@ -9,7 +9,7 @@ with open(Path(__file__).parent/'README.md') as f:
 
 setup(
     name = 'nskit',
-    version = '1.5.0',
+    version = '1.6.0',
     author = 'Artem Mukanov',
     url = 'https://github.com/Arty40m/nskit',
     description = 'Library for processing nucleic acid secondary structure',

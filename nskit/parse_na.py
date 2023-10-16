@@ -53,8 +53,6 @@ def parse_arguments(a:Optional[str], b:Optional[str]) -> Tuple[Optional[str], Op
 
 def parse_structure(struct: str, 
                     ignore_unclosed_bonds: bool, 
-                    allow_sharp_helixes: bool, 
-                    fix_sharp_helixes: bool
                    ) -> List:
     pairs = []
     if len(rem:=(set(struct) - DOT_STRUCTURE_SYMBOLS))!=0:
@@ -76,13 +74,6 @@ def parse_structure(struct: str,
                     continue
                 raise InvalidStructure(f"Closing bond {s} at index {i} has no open pair, "
                                        f"use ignore_unclosed_bonds=True to omit such bonds")
-                
-            if abs(op_idx-i)==1 and not allow_sharp_helixes:
-                if fix_sharp_helixes:
-                    continue
-                raise InvalidStructure(f"Sharp helix between nbs {op_idx} and {i}, "
-                                       f"use fix_sharp_helixes=True to omit such bonds or "
-                                       f"allow_sharp_helixes=True to allow such bonds")
                     
             pairs.append((op_idx, i))
 
@@ -95,8 +86,6 @@ def parse_structure(struct: str,
 def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *, 
        name: Optional[str] = None, 
        meta: Optional[dict] = None,
-       allow_sharp_helixes: bool = False,
-       fix_sharp_helixes: bool = False, 
        ignore_unclosed_bonds: bool = False, 
        upper_sequence: bool = False,
       ) -> NucleicAcid:
@@ -107,8 +96,6 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
     :param b: structure if sequence is provided.
     :param name: na name.
     :param meta: dictionary of meta information convertable to string.
-    :param allow_sharp_helixes: allow bond betwee neighboring nbs. Default - False.
-    :param fix_sharp_helixes: remove bond between neighboring nbs to fix sharp helixes. Default - False.
     :param ignore_unclosed_bonds: omit single unpaired parentheses without raising error. Default - False.
     :param upper_sequence: upper sequence characters. Default - False.
 
@@ -120,9 +107,6 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
         
     if isinstance(a, NucleicAcid): 
         return a
-    
-    if allow_sharp_helixes and fix_sharp_helixes:
-        raise TypeError("Both allow_sharp_helixes and fix_sharp_helixes = True is ambiguous")
         
     seq, struct = parse_arguments(a, b)
      
@@ -138,7 +122,7 @@ def NA(a: Union[str, NucleicAcid], b: Optional[str] = None, /, *,
         
     # parse structure
     if struct:
-        pairs = parse_structure(struct, ignore_unclosed_bonds, allow_sharp_helixes, fix_sharp_helixes)
+        pairs = parse_structure(struct, ignore_unclosed_bonds)
     
     # create graph
     na = NucleicAcid()

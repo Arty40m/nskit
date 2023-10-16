@@ -111,8 +111,7 @@ class dotLinesWrite:
         if not all([isinstance(d, str) for d in data]):
             raise ValueError(f"All passed data must be strings")
             
-        self._file.write(f"{data[0]}\n")
-        for i in range(1, len(data)):
+        for i in range(0, len(data)):
             self._file.write(f"{data[i]}\n")
         
         

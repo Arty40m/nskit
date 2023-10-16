@@ -31,13 +31,6 @@ nas = [
 ]
 
 
-def file_with_sharp_helix():
-    fp = tempfile.TemporaryFile('w+')
-    fp.write(">seq\nCUUCGUGGC\n.().((.))")
-    fp.seek(0)
-    return fp
-
-
 class TestDotBracket:
 
     def test_read(self):
@@ -53,27 +46,6 @@ class TestDotBracket:
                 assert na.name==true_na.name
                 assert na.meta==true_na.meta
 
-    
-    def test_sharp_helix(self):
-        fp = file_with_sharp_helix()
-        with dotRead(fp) as f:
-            na = next(f)
-            assert na is None
-            
-            
-    def test_sharp_helix_fix(self):
-        fp = file_with_sharp_helix()
-        with dotRead(fp, fix_sharp_helixes=True) as f:
-            na = next(f)
-            assert na.struct == "....((.))"
-            
-            
-    def test_allow_sharp_helix(self):
-        fp = file_with_sharp_helix()
-        with dotRead(fp, allow_sharp_helixes=True) as f:
-            na = next(f)
-            assert na.struct == ".().((.))"
-                
                 
     def test_empty_na(self):
         fp = tempfile.TemporaryFile('w+')

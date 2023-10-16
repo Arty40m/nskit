@@ -15,8 +15,6 @@ class dotRead(dotLinesRead):
     
     def __init__(self, file: Union[str, Path], *, 
                  raise_na_errors: bool = False, 
-                 allow_sharp_helixes: bool = False, 
-                 fix_sharp_helixes: bool = False, 
                  ignore_unclosed_bonds: bool = False, 
                  upper_sequence: bool = False,
                 ):
@@ -24,8 +22,6 @@ class dotRead(dotLinesRead):
         super().__init__(file)
         
         self.raise_na_errors = raise_na_errors
-        self.allow_sharp_helixes = allow_sharp_helixes
-        self.fix_sharp_helixes = fix_sharp_helixes
         self.ignore_unclosed_bonds = ignore_unclosed_bonds
         self.upper_sequence = upper_sequence
         
@@ -84,8 +80,6 @@ class dotRead(dotLinesRead):
             na = NA(seq, struct, 
                     name=name, 
                     meta=meta, 
-                    allow_sharp_helixes = self.allow_sharp_helixes, 
-                    fix_sharp_helixes = self.fix_sharp_helixes, 
                     ignore_unclosed_bonds = self.ignore_unclosed_bonds, 
                     upper_sequence = self.upper_sequence,
                    )

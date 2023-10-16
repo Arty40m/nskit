@@ -36,12 +36,6 @@ multiple_bonds = np.array([
     [1, 0, 0, 0, 0], 
 ])
 
-sharp_helix = np.array([
-    [0, 0, 0, 1], 
-    [0, 0, 1, 0], 
-    [0, 1, 0, 0], 
-    [1, 0, 0, 0], 
-])
 
 class TestAdjacency:
 
@@ -83,20 +77,6 @@ class TestAdjacency:
         with pytest.raises(InvalidAdjacency):
             _ = NucleicAcid.from_adjacency(multiple_bonds)
 
-
-    def test_sharp_helix_error(self):
-        with pytest.raises(InvalidStructure):
-            _ = NucleicAcid.from_adjacency(sharp_helix)
-
-    
-    def test_sharp_helix_fix(self):
-        na = NucleicAcid.from_adjacency(sharp_helix, fix_sharp_helixes=True)
-        assert na.struct == '(..)'
-        
-    
-    def test_allow_sharp_helix(self):
-        na = NucleicAcid.from_adjacency(sharp_helix, allow_sharp_helixes=True)
-        assert na.struct == '(())'
         
         
         

@@ -1,5 +1,4 @@
 from functools import cached_property
-import warnings
 from typing import List, Optional, Tuple, Union
 import numpy as np
 import numpy
@@ -37,9 +36,6 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
         if n==m: 
             raise ValueError("Can not join nb with itself")
             
-        if abs(n-m)==1:
-            warnings.warn(f"Nbs {n} and {m} form sharp helix")
-
         if self.complnb(n):
             raise ValueError(f"Nb {n} already has complementary bond")
         if self.complnb(m):
@@ -49,7 +45,7 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
         self.clear_graph_cache()
     
 
-    def split(self, n: int, m: int):
+    def split(self, n: int, m: int, clear_cache: bool = True):
         """
         Breaks complementary bond between specified nbs if exists.
         """
@@ -63,7 +59,40 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
             raise ValueError(f"Nbs {n} and {m} does not have complementary bond")
 
         self._remove_bond(n, m)
-        self.clear_graph_cache()
+        if clear_cache:
+            self.clear_graph_cache()
+        
+        
+    def fix_sharp_hairpins(self, min_pin_size: int = 1):
+        """
+        Breaks complementary bonds at the end of each helix until all hairpins are greater or equal then min_pin_size.
+        """
+        if not isinstance(min_pin_size, int) or (min_pin_size<1):
+            raise ValueError("min_pin_size must be integer >= 1")
+            
+        check_helixes=True
+        while check_helixes:
+            helixes = self.helixes
+            orders = self.helix_orders
+            check_helixes = False
+            
+            for i, h in enumerate(helixes):
+                if orders[i]: # pseudoknot helix
+                    continue
+
+                pin_size = h.clc[0] - h.opc[-1] - 1
+                if pin_size>=min_pin_size:
+                    continue
+
+                n_pairs_to_remove = (dif:=min_pin_size-pin_size)//2 + dif%2
+                for j in range(1, n_pairs_to_remove+1):
+                    if j>len(h): # end of helix
+                        break
+
+                    self.split(*h[-j], clear_cache=False)
+                    check_helixes=True
+                
+            self.clear_graph_cache()
 
 
     def clear_graph_cache(self):
