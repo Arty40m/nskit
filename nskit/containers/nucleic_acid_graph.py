@@ -226,19 +226,42 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
             end_idx = h.clc[0]
             loop = [h[-1],]
             idx = h.opc[-1] + 1
+
+            knot_helix = []
+            last_knot_idx = None
+            knot_helixes = []
             while True:
                 if idx==end_idx: # end of the loop
                     break
 
-                if ((cidx:=self.complnb(idx)) is not None) and (idx not in knot_nbs):
-                    loop.append((idx, cidx))
-                    idx = cidx+1
-                else:
-                    loop.append(idx)
-                    idx+=1
+                if ((cidx:=self.complnb(idx)) is not None):
+                    if idx not in knot_nbs: # normal helix
+                        loop.append((idx, cidx))
+                        idx = cidx+1
+                        continue
 
-            loops.append(_make_loop(loop))
-            
+                    # knot helix
+                    if last_knot_idx is None: # first knot nb
+                        knot_helix.append(idx)
+
+                    elif abs(last_knot_idx-idx)>1: # new knot helix
+                        knot_helixes.append(tuple(knot_helix))
+                        knot_helix = [idx]
+
+                    else: # continue knot
+                        knot_helix.append(idx)
+
+                    last_knot_idx = idx
+
+                loop.append(idx)
+                idx+=1
+
+            if len(knot_helix)>0:
+                knot_helixes.append(tuple(knot_helix))
+                loops.append(_make_loop(tuple(loop), tuple(knot_helixes)))
+            else:
+                loops.append(_make_loop(tuple(loop)))
+
         return tuple(loops)
     
     

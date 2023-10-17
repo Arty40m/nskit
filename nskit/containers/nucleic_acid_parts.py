@@ -38,32 +38,42 @@ class Helix:
         return str(self)
     
 
-def _make_loop(nodes):
+def _make_loop(nodes, knots=None):
     c = len([1 for n in nodes if isinstance(n, tuple)])
     if c==1:
-        return Hairpin(nodes)
+        return Hairpin(nodes, knots)
     
     elif c>2:
-        return Junction(nodes)
+        return Junction(nodes, knots)
     
     elif isinstance(nodes[1], tuple) or isinstance(nodes[-1], tuple):
-        return Bulge(nodes)
+        return Bulge(nodes, knots)
     
     else:
-        return InternalLoop(nodes)
+        return InternalLoop(nodes, knots)
         
     
 class Loop:
     
-    __slots__ = '__nodes', 
+    __slots__ = '__nodes', '__knots'
     
-    def __init__(self, nodes, knot_nbs=None):
-        self.__nodes = tuple(nodes)
+    def __init__(self, nodes, knots=None):
+        self.__nodes = nodes
+        self.__knots = knots
         
         
     @property
     def nodes(self):
         return self.__nodes
+    
+    
+    @property
+    def knots(self):
+        return self.__knots
+    
+    
+    def has_knot(self):
+        return self.__knots is not None
     
     
     @property
@@ -107,32 +117,32 @@ class Hairpin(Loop):
     
     __slots__ = tuple()
     
-    def __init__(self, nodes):
-        super().__init__(nodes)
+    def __init__(self, nodes, knots):
+        super().__init__(nodes, knots)
     
     
 class InternalLoop(Loop):
     
     __slots__ = tuple()
     
-    def __init__(self, nodes):
-        super().__init__(nodes)
+    def __init__(self, nodes, knots):
+        super().__init__(nodes, knots)
         
         
 class Bulge(Loop):
     
     __slots__ = tuple()
     
-    def __init__(self, nodes):
-        super().__init__(nodes)
+    def __init__(self, nodes, knots):
+        super().__init__(nodes, knots)
         
         
 class Junction(Loop):
     
     __slots__ = tuple()
     
-    def __init__(self, nodes):
-        super().__init__(nodes)
+    def __init__(self, nodes, knots):
+        super().__init__(nodes, knots)
         
         
         

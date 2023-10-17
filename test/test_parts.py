@@ -18,7 +18,12 @@ class TestLoops:
         for i, l in enumerate(na.loops):
             assert isinstance(l, target_parts[i])
             
-            
+    
+    def test_sharp_hairpin(self):
+        na = NA('..()..')
+        assert len(na.loops[0].loop)==2
+        
+        
     def test_no_loops(self):
         na = NA('.....')
         assert len(na.loops)==0
@@ -26,26 +31,26 @@ class TestLoops:
         
     def test_hairpin_length(self):
         na = NA('..(((.....)))..')
-        assert len(na.loops[0].loop)==7
-        assert len(na.loops[0])==7
+        assert len(na.hairpins[0].loop)==7
+        assert len(na.hairpins[0])==7
             
             
     def test_internal_loop_length(self):
         na = NA('..(((...((...))...)))..')
-        assert len(na.loops[0].loop)==10
-        assert len(na.loops[0])==10
+        assert len(na.internal_loops[0].loop)==10
+        assert len(na.internal_loops[0])==10
             
             
     def test_bulge_length(self):
         na = NA('..(((((...))..)))..')
-        assert len(na.loops[0].loop)==6
-        assert len(na.loops[0])==6
+        assert len(na.bulges[0].loop)==6
+        assert len(na.bulges[0])==6
             
             
     def test_junction_length(self):
         na = NA('..(((..((...))...((...))...((..))...)))..')
-        assert len(na.loops[0].loop)==19
-        assert len(na.loops[0])==19
+        assert len(na.junctions[0].loop)==19
+        assert len(na.junctions[0])==19
             
           
     @pytest.mark.parametrize(
@@ -61,7 +66,39 @@ class TestLoops:
         assert len(na.loops[0].branches)==n
         
         
+class TestKnotsInLoop:
+    
+    def test_not_knots(self):
+        na = NA('.((..))..')
+        assert na.loops[0].has_knot() == False
         
+        
+    @pytest.mark.parametrize(
+        "na, knots",
+        [
+            (NA('.((.[[.)).]].'), ((4, 5),)), 
+            (NA('.((.[[.[[.)).]].]].'), ((4, 5), (7, 8))), 
+            (NA('.((.[[.{{.)).]].}}.'), ((4, 5), (7, 8))), 
+         ]
+    )
+    def test_hairpin_knots(self, na, knots):
+        assert na.loops[0].has_knot()
+        assert na.loops[0].knots == knots
+    
+    
+    def test_junction_knots(self):
+        na = NA('..((..((...))..((..[[.)).]].))..')
+        assert na.junctions[0].knots == ((25, 26),)
+        assert na.hairpins[1].knots == ((19, 20),)
+    
+    
+    
+    
+    
+    
+    
+    
+    
         
         
         
