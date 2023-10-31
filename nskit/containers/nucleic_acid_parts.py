@@ -123,10 +123,24 @@ class Hairpin(Loop):
     
 class InternalLoop(Loop):
     
-    __slots__ = tuple()
+    __slots__ = "short_side", "long_side"
     
     def __init__(self, nodes, knots):
         super().__init__(nodes, knots)
+        
+        a = 1
+        for i in range(2, len(self.nodes)):
+            if isinstance(self.nodes[i], tuple):
+                break
+            a+=1
+        
+        b = len(self.nodes) - 2 - a
+        self.short_side = min(a, b)
+        self.long_side = max(a, b)
+        
+        
+    def is_symmetric(self):
+        return self.short_side==self.long_side
         
         
 class Bulge(Loop):

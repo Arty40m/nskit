@@ -20,6 +20,7 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
         
         
     def complnb(self, n: int) -> Optional[int]:
+        n = n+len(self) if n<0 else n
         return self._bonds.get(n, None)
         
 
@@ -283,6 +284,25 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
     @property
     def junctions(self) -> Tuple[Junction]:
         return tuple([l for l in self.loops if isinstance(l, Junction)])
+    
+    
+    @cached_property
+    def dangling_ends(self) -> Tuple[Tuple[int], Tuple[int]]:
+        end5 = []
+        end3 = []
+        for i in range(len(self)):
+            if self.complnb(i) is None:
+                end5.append(i)
+            else:
+                break
+                
+        for j in range(len(self)-1, i, -1):
+            if self.complnb(j) is None:
+                end3.append(j)
+            else:
+                break
+                
+        return tuple(end5), tuple(end3[::-1])
 
 
     def get_adjacency(self) -> numpy.array:

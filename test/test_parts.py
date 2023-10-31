@@ -92,11 +92,45 @@ class TestKnotsInLoop:
         assert na.hairpins[1].knots == ((19, 20),)
     
     
+class TestDanglingEnds:
+    
+    @pytest.mark.parametrize(
+        "na, ends",
+        [
+            (NA('.((...))..'), ((0,), (8, 9)) ), 
+            (NA('((...))..'), (tuple(), (7, 8)) ), 
+            (NA('..((..))'), ((0, 1), tuple()) ), 
+            (NA('((..))'), (tuple(), tuple()) ), 
+            (NA('....'), ((0, 1, 2, 3), tuple()) ), 
+         ]
+    )
+    def test_ends(self, na, ends):
+        assert na.dangling_ends==ends
     
     
+class TestPartProperties:
     
+    def test_symmetric_internal_loop(self):
+        na = NA('((..((...))..))')
+        assert na.internal_loops[0].is_symmetric()
+        assert na.internal_loops[0].short_side==2
+        
     
-    
+    @pytest.mark.parametrize(
+        "na, short_side, long_side",
+        [
+            (NA('((.((...))..))'), 1, 2), 
+            (NA('((....((...))..))'), 2, 4), 
+            (NA('((..((..[[.))..]]...))'), 2, 7), 
+         ]
+    )
+    def test_asymmetric_internal_loop(self, na, short_side, long_side):
+        assert not na.internal_loops[0].is_symmetric()
+        assert na.internal_loops[0].short_side==short_side
+        assert na.internal_loops[0].long_side==long_side
+        
+        
+        
     
     
         

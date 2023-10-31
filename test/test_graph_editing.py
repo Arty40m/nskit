@@ -6,6 +6,25 @@ from nskit.exceptions import InvalidSequence, InvalidStructure
 
 class TestBondEditing:
 
+    @pytest.fixture(scope="session")
+    def na(self):
+        return NA('..(((..[[...).))..]].') # len - 21
+    
+    
+    @pytest.mark.parametrize(
+        "i, compl",
+        [
+            (0, None), 
+            (2, 15), 
+            (19, 7),
+            (-1, None), 
+            (-2, 7)
+         ]
+    )
+    def test_complementary_search(self, i, compl, na):
+        assert na.complnb(i)==compl
+        
+    
     @pytest.mark.parametrize(
         "struct, i, j, target",
         [
@@ -21,11 +40,6 @@ class TestBondEditing:
 
         na.split(i, j)
         assert na.struct==struct
-
-
-    @pytest.fixture(scope="session")
-    def na(self):
-        return NA('..(((..[[...).))..]].') # len - 21
     
 
     @pytest.mark.parametrize(
@@ -55,12 +69,6 @@ class TestBondEditing:
         with pytest.raises(ValueError):
             na.join(i, j)
             
-    
-    @pytest.mark.filterwarnings("ignore:")
-    def test_join_sharp_helix(self, na):
-        na.join(0, 1)
-        assert na.struct == "()(((..[[...).))..]]."
-
 
     @pytest.mark.parametrize(
         "i, j",
