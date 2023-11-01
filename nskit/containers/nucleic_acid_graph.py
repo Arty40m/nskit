@@ -4,7 +4,7 @@ import numpy as np
 import numpy
 
 from .graph import SimplifiedLinearGraph
-from .nucleic_acid_parts import Helix, _make_loop, Hairpin, InternalLoop, Bulge, Junction
+from .nucleic_acid_fragments import Helix, _make_loop, Hairpin, InternalLoop, Bulge, Junction
 
 
 
@@ -230,13 +230,15 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
 
             knot_helix = []
             last_knot_idx = None
+            last_compl_idx = None
             knot_helixes = []
             while True:
                 if idx==end_idx: # end of the loop
                     break
 
-                if ((cidx:=self.complnb(idx)) is not None):
-                    if idx not in knot_nbs: # normal helix
+                if ((cidx:=self.complnb(idx)) is not None): # nb has complementary bond
+                    # normal helix
+                    if idx not in knot_nbs: 
                         loop.append((idx, cidx))
                         idx = cidx+1
                         continue
@@ -245,7 +247,7 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
                     if last_knot_idx is None: # first knot nb
                         knot_helix.append(idx)
 
-                    elif abs(last_knot_idx-idx)>1: # new knot helix
+                    elif abs(last_knot_idx-idx)>1 or abs(last_compl_idx-cidx)>1: # new knot helix
                         knot_helixes.append(tuple(knot_helix))
                         knot_helix = [idx]
 
@@ -253,6 +255,7 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
                         knot_helix.append(idx)
 
                     last_knot_idx = idx
+                    last_compl_idx = cidx
 
                 loop.append(idx)
                 idx+=1

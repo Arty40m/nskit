@@ -5,7 +5,7 @@ from nskit.containers import Helix, Hairpin, InternalLoop, Bulge, Junction
 class TestLoops:
     
     @pytest.mark.parametrize(
-        "na, target_parts",
+        "na, target_fragments",
         [
             (NA('.((.((..((((..))..))........((..((.[[.))))....]]...))..))...'), 
              (InternalLoop, Junction, Bulge, Hairpin, Bulge, Hairpin)), 
@@ -14,9 +14,9 @@ class TestLoops:
              (InternalLoop, Bulge, Bulge, InternalLoop, Hairpin)), 
          ]
     )
-    def test_parts_order(self, na, target_parts):
+    def test_fragments_order(self, na, target_fragments):
         for i, l in enumerate(na.loops):
-            assert isinstance(l, target_parts[i])
+            assert isinstance(l, target_fragments[i])
             
     
     def test_sharp_hairpin(self):
@@ -79,6 +79,7 @@ class TestKnotsInLoop:
             (NA('.((.[[.)).]].'), ((4, 5),)), 
             (NA('.((.[[.[[.)).]].]].'), ((4, 5), (7, 8))), 
             (NA('.((.[[.{{.)).]].}}.'), ((4, 5), (7, 8))), 
+            (NA('.((.[[{{..)).]].}}.'), ((4, 5), (6, 7))), 
          ]
     )
     def test_hairpin_knots(self, na, knots):
@@ -108,7 +109,7 @@ class TestDanglingEnds:
         assert na.dangling_ends==ends
     
     
-class TestPartProperties:
+class TestfragmentProperties:
     
     def test_symmetric_internal_loop(self):
         na = NA('((..((...))..))')
