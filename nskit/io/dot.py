@@ -17,6 +17,7 @@ class dotRead(dotLinesRead):
                  raise_na_errors: bool = False, 
                  ignore_unclosed_bonds: bool = False, 
                  upper_sequence: bool = False,
+                 meta_separator: str = META_SEPARATOR
                 ):
         
         super().__init__(file)
@@ -24,6 +25,7 @@ class dotRead(dotLinesRead):
         self.raise_na_errors = raise_na_errors
         self.ignore_unclosed_bonds = ignore_unclosed_bonds
         self.upper_sequence = upper_sequence
+        self.meta_separator = meta_separator
         
         self._na_iterator = self._na_iterate()
         
@@ -52,7 +54,7 @@ class dotRead(dotLinesRead):
             struct = None
             lines = []
         
-        elif META_SEPARATOR in lines[2]:
+        elif self.meta_separator in lines[2]:
             struct = None
             lines = lines[2:]
             
@@ -67,9 +69,9 @@ class dotRead(dotLinesRead):
             meta = {}
             
             for ml in lines:
-                toks = ml.strip().split(META_SEPARATOR)
+                toks = ml.strip().split(self.meta_separator)
                 if len(toks)!=2:
-                    raise InvalidDotBracket(f"Meta information must contain one separation token '{META_SEPARATOR}' " 
+                    raise InvalidDotBracket(f"Meta information must contain one separation token '{self.meta_separator}' " 
                                             f"(structure at index {last_na_idx}")
                 
                 k, v = toks
@@ -97,10 +99,13 @@ class dotRead(dotLinesRead):
 class dotWrite(dotLinesWrite):
     
     def __init__(self, file, *, 
-                 append: bool = False,
+                 append: bool = False, 
+                 meta_separator: str = META_SEPARATOR
                 ):
         
         super().__init__(file, append=append)
+        
+        self.meta_separator = meta_separator
         
         
     def write(self, na: NucleicAcid, *, 
@@ -118,7 +123,7 @@ class dotWrite(dotLinesWrite):
         
         if na.meta and write_meta:
             for k, v in na.meta.items():
-                lines.append(f"{k}{META_SEPARATOR}{str(v)}\n")
+                lines.append(f"{k}{self.meta_separator}{str(v)}")
         
         super().write(lines)
                 
