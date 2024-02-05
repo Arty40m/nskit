@@ -140,12 +140,10 @@ FRAGMENT_COUNT_CONFIG = {
 FIRST_KNOT_FRAGMENT_INDEX = 6
 
 FEATURE_INDEXES = {}
-c = 0
 for i, fragment_dict in enumerate(FRAGMENT_COUNT_CONFIG.values()):
     all_features = product(*[p['ranges'] for p in fragment_dict['properties'].values()])
     for f in all_features:
-        FEATURE_INDEXES[((i, ) + f)] = c
-        c+=1
+        FEATURE_INDEXES[((i, ) + f)] = len(FEATURE_INDEXES)
 
 
 def get_na_features(na):
@@ -199,10 +197,14 @@ def FragmentCount(na: NucleicAcid,
         features = list(filter(lambda x: x[0]<FIRST_KNOT_FRAGMENT_INDEX, features))
         
     # remove 3'end dangling end feature for linear structure
-    if len(na.pairs)==0 and \
-        len(na)>1 and \
-        (5, (0, 2)) in features:
-        features = list(filter(lambda x: x!=(5, (0, 2)), features))
+    if len(na.pairs)==0:
+        dangling_end_first_range = FRAGMENT_COUNT_CONFIG["dangling_ends"]["properties"]["len"]["ranges"][0]
+        dangling_end_fragment_idx = [i for i, f in enumerate(FRAGMENT_COUNT_CONFIG.keys()) if f=='dangling_ends'][0]
+        dangling_end_feature = dangling_end_fragment_idx, dangling_end_first_range
+        features = list(filter(lambda x: x!=dangling_end_feature, features))
+        
+        if len(na)==1: # add one end feature
+            features.append(dangling_end_feature)
 
     for f in features:
         idx = FEATURE_INDEXES[f]
