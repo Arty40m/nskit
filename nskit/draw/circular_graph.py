@@ -25,12 +25,11 @@ class CircularGraph:
         helix_radiuses = []
 
         for h in self.helixes:
-            h3, h5 = h
             radiuses = []
 
-            for i in range(len(h3)):
-                iv = nb_coords[h3[i]]
-                jv = nb_coords[h5[-(i+1)]]
+            for i, j in h:
+                iv = nb_coords[i]
+                jv = nb_coords[j]
             
                 C = iv + (jv - iv)/2
                 clen = np.linalg.norm(C)

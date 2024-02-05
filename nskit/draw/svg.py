@@ -89,12 +89,9 @@ class DrawSVG:
         knots = self.knots
         
         for n, (h, hr) in enumerate(zip(self.helixes, helix_coords)):
-            h3, h5 = h
             color = draw_config['knot_bond_color'] if n in knots else draw_config['compl_bond_color']
 
-            for i in range(len(h3)):
-                nb1 = h3[i]
-                nb2 = h5[-(1+i)]
+            for i, (nb1, nb2) in enumerate(h):
                 if abs(nb2-nb1+1)>((len(self)+2)//2):
                     nb1, nb2 = nb2, nb1
 
