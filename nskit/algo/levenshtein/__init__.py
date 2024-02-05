@@ -39,7 +39,21 @@ def levdist(a: Union[str, NucleicAcid],
                          float(rm), 
                          float(sub)
                         )
-
+    
+    ### temporary bug fix
+    c = 0
+    while abs(dist)>(max(len(a), len(b))*max(ins, rm, sub)):
+        dist = c_levenshtein(a, b, 
+                         len(a), len(b), 
+                         float(ins), 
+                         float(rm), 
+                         float(sub)
+                        )
+        c+=1
+        if c>=10:
+            raise ValueError("Something gone wrong with levenshtein.")
+    ###
+    
     return dist
 
 
