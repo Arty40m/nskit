@@ -223,10 +223,11 @@ class NucleicAcidGraph(SimplifiedLinearGraph):
         for i, h in enumerate(self.helixes):
             if i in knots:
                 continue
-
-            end_idx = h.clc[0]
+            
+            root = h[-1]
+            end_idx = root[1]
             loop = [h[-1],]
-            idx = h.opc[-1] + 1
+            idx = root[0] + 1
 
             knot_helix = []
             last_knot_idx = None

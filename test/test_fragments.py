@@ -21,7 +21,7 @@ class TestLoops:
     
     def test_sharp_hairpin(self):
         na = NA('..()..')
-        assert len(na.loops[0].loop)==2
+        assert len(na.loops[0].nts)==2
         
         
     def test_no_loops(self):
@@ -31,25 +31,25 @@ class TestLoops:
         
     def test_hairpin_length(self):
         na = NA('..(((.....)))..')
-        assert len(na.hairpins[0].loop)==7
+        assert len(na.hairpins[0].nts)==7
         assert len(na.hairpins[0])==7
             
             
     def test_internal_loop_length(self):
         na = NA('..(((...((...))...)))..')
-        assert len(na.internal_loops[0].loop)==10
+        assert len(na.internal_loops[0].nts)==10
         assert len(na.internal_loops[0])==10
             
             
     def test_bulge_length(self):
         na = NA('..(((((...))..)))..')
-        assert len(na.bulges[0].loop)==6
+        assert len(na.bulges[0].nts)==6
         assert len(na.bulges[0])==6
             
             
     def test_junction_length(self):
         na = NA('..(((..((...))...((...))...((..))...)))..')
-        assert len(na.junctions[0].loop)==19
+        assert len(na.junctions[0].nts)==19
         assert len(na.junctions[0])==19
             
           

@@ -17,6 +17,11 @@ class Helix:
         return self.__clc
     
     
+    @property
+    def root(self):
+        return self[0]
+    
+    
     def __iter__(self):
         return zip(self.__opc, self.__clc[::-1])
     
@@ -30,8 +35,7 @@ class Helix:
     
     
     def __str__(self):
-        return (f"-({', '.join([str(i) for i in self.__opc])})\n"
-                f" ({', '.join([str(i) for i in self.__clc[::-1]])})-")
+        return "He-"+str(tuple(iter(self)))
     
     
     def __repr__(self):
@@ -77,17 +81,17 @@ class Loop:
     
     
     @property
-    def loop(self):
-        loop = [self.__nodes[0][0]]
+    def nts(self):
+        nts = [self.__nodes[0][0]]
         for i in range(1, len(self.__nodes)):
             n = self.__nodes[i]
             if isinstance(n, int):
-                loop.append(n)
+                nts.append(n)
             else:
-                loop.append(n[0])
-                loop.append(n[1])
-        loop.append(self.__nodes[0][1])
-        return loop
+                nts.append(n[0])
+                nts.append(n[1])
+        nts.append(self.__nodes[0][1])
+        return nts
     
     
     @property
@@ -95,22 +99,25 @@ class Loop:
         return tuple((n for n in self.__nodes if isinstance(n, tuple)))
     
     
+    @property
+    def root(self):
+        return self.__nodes[0]
+    
+    
     def __len__(self):
         return len(self.__nodes) + len(self.branches)
     
     
     def __iter__(self):
-        return self.__nodes
+        return self.nts
     
     
     def __str__(self):
-        tokens = [""]*len(self.__nodes)
-        tokens[0] = f"[{self.__nodes[0][0]}, {self.__nodes[0][1]}]"
-        
-        for i in range(1, len(self.__nodes)):
-            tokens[i] = str(self.__nodes[i])
-            
-        return ", ".join(tokens)
+        return str(self.__nodes)
+    
+    
+    def __repr__(self):
+        return str(self)
     
     
 class Hairpin(Loop):
@@ -119,6 +126,10 @@ class Hairpin(Loop):
     
     def __init__(self, nodes, knots):
         super().__init__(nodes, knots)
+        
+        
+    def __str__(self):
+        return "Hp-"+super().__str__()
     
     
 class InternalLoop(Loop):
@@ -141,6 +152,10 @@ class InternalLoop(Loop):
         
     def is_symmetric(self):
         return self.short_side==self.long_side
+    
+    
+    def __str__(self):
+        return "I-"+super().__str__()
         
         
 class Bulge(Loop):
@@ -151,12 +166,20 @@ class Bulge(Loop):
         super().__init__(nodes, knots)
         
         
+    def __str__(self):
+        return "B-"+super().__str__()
+        
+        
 class Junction(Loop):
     
     __slots__ = tuple()
     
     def __init__(self, nodes, knots):
         super().__init__(nodes, knots)
+        
+        
+    def __str__(self):
+        return "J-"+super().__str__()
         
         
         
