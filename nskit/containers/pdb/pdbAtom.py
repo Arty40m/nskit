@@ -1,4 +1,5 @@
 import numpy as np
+from ...exceptions import InvalidPDB
 
 
     
@@ -103,7 +104,7 @@ class PdbAtom:
         element = line[76:78].strip()          # Element symbol
         if element=="":
             if not derive_element:
-                raise ValueError(f"Atom {atomn} {name} has no element field.")
+                raise InvalidPDB(f"Atom {atomn} {name} has no element field.")
             element = element_derive_func(is_hetatm, name, mol_name, chain)     
         
         charge = line[78:80].strip()           # Charge
@@ -111,7 +112,7 @@ class PdbAtom:
         elif charge=='+': charge = 1
         elif charge=='-': charge = -1
         else:
-            raise ValueError(f"Invalid atom charge '{charge}' in atom {atomn} {name}, expected + - or nothing.")
+            raise InvalidPDB(f"Invalid atom charge '{charge}' in atom {atomn} {name}, expected + - or nothing.")
         
         return PdbAtom(is_hetatm, atomn, name, altloc, mol_name, chain, moln, insert_code,
                     x, y, z, occupancy, temp, segment, element, charge)

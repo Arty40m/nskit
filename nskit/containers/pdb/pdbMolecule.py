@@ -25,16 +25,27 @@ class PdbMolecule:
     def __iter__(self):
         return iter(self.__atoms)
     
+    def __str__(self):
+        return "\n".join([str(a) for a in self.__atoms])
+    
         
     def add_atom(self, atom: PdbAtom):
-        if self.__name_idx_map.get(atom.name) is not None:
-            raise ValueError(f"Atom with name {atom.name} already exists in molecule.")
+        if len(self.__atoms):
+            if self.__name_idx_map.get(atom.name) is not None:
+                raise ValueError(f"Atom ({atom.atomn}) with name {atom.name} already exists in molecule.")
+            
+            a = self.__atoms[0]
+            if atom.mol_name!=a.mol_name:
+                raise ValueError(f"All atoms of a molecule (number {a.moln}) must have the same molecule name ({a.mol_name}), got {atom.mol_name}.")
+
+            if atom.chain!=a.chain:
+                raise ValueError(f"All atoms of a molecule (number {a.moln}) must have the same chain name ({a.chain}), got {atom.chain}.")
             
         self.__atoms.append(atom)
         self.__name_idx_map[atom.name] = len(self.__atoms)
         
     def get_atom_idx(self, name: str):
-        return self.__name_idx_map[name]
+        return self.__name_idx_map.get(name)
     
     def get_atom(self, i: Union[int, str]):
         if isinstance(i, int):
@@ -55,6 +66,14 @@ class PdbMolecule:
         
     
     @property
+    def moln(self):
+        return self.__atoms[0].moln
+    
+    @property
+    def chain(self):
+        return self.__atoms[0].chain
+    
+    @property
     def coords(self):
         return np.stack([a.coords for a in self.__atoms])
     
@@ -65,3 +84,8 @@ class PdbMolecule:
             
         for i in range(c.shape[0]):
             self.__atoms[i].coords = c[i]
+            
+            
+class PdbResidue(PdbMolecule):
+    def __init__(self):
+        super().__init__()
