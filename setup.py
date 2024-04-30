@@ -32,6 +32,6 @@ setup(
     extras_require = {'dev':['pytest']}, 
     
     ext_modules=[
-        Extension('nskit.algo.levenshtein._levenshtein', ['nskit/algo/levenshtein/_levenshtein.c']),
+        Extension('nskit.algo.levenshtein._levenshtein', ['nskit/algo/levenshtein/levenshtein.c']),
                 ]
 )
